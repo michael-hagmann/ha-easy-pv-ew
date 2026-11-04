@@ -7,10 +7,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.easy_pv_ew.const import DOMAIN
 from custom_components.easy_pv_ew.easy_pv import BASE_URL
 
 if TYPE_CHECKING:
+    from homeassistant.core import HomeAssistant
     from pytest_homeassistant_custom_component.test_util.aiohttp import (
         AiohttpClientMocker,
     )
@@ -43,3 +46,24 @@ def mock_api(aioclient_mock: AiohttpClientMocker) -> AiohttpClientMocker:
     aioclient_mock.get(URL_DEVICES, json=load_fixture("power_list.json"))
     aioclient_mock.get(URL_DEVICE_DATA, json=load_fixture("device_data.json"))
     return aioclient_mock
+
+
+@pytest.fixture
+def config_entry() -> MockConfigEntry:
+    """Config entry as created by the config flow (token only, no password)."""
+    return MockConfigEntry(
+        domain=DOMAIN,
+        title="Testkonto",
+        data={"title": "Testkonto", "token": "test-token", "email": "test@example.com"},
+    )
+
+
+@pytest.fixture
+async def setup_integration(
+    hass: HomeAssistant, config_entry: MockConfigEntry, mock_api: AiohttpClientMocker
+) -> MockConfigEntry:
+    """Set up the integration with all API endpoints answering successfully."""
+    config_entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    return config_entry

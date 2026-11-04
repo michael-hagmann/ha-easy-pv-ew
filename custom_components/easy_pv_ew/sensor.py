@@ -2,7 +2,11 @@
 
 import logging
 
-from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
 from homeassistant.const import (
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
@@ -67,7 +71,8 @@ async def async_setup_entry(
 class StationPowerSensor(EasyPVStationEntity, SensorEntity):  # type: ignore[misc]
     """Representation of a Sensor."""
 
-    device_class = SensorDeviceClass.POWER  # type: ignore[override]
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_suggested_display_precision = 2
     _attr_translation_key = "power"
@@ -91,7 +96,8 @@ class StationPowerSensor(EasyPVStationEntity, SensorEntity):  # type: ignore[mis
 class StationEnergyTodaySensor(EasyPVStationEntity, SensorEntity):  # type: ignore[misc]
     """Representation of a Sensor."""
 
-    device_class = SensorDeviceClass.ENERGY  # type: ignore[override]
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_suggested_display_precision = 2
     _attr_translation_key = "energy_today"
@@ -115,7 +121,8 @@ class StationEnergyTodaySensor(EasyPVStationEntity, SensorEntity):  # type: igno
 class StationEnergyTotalSensor(EasyPVStationEntity, SensorEntity):  # type: ignore[misc]
     """Representation of a Sensor."""
 
-    device_class = SensorDeviceClass.ENERGY  # type: ignore[override]
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_suggested_display_precision = 2
     _attr_translation_key = "energy_total"
@@ -139,7 +146,8 @@ class StationEnergyTotalSensor(EasyPVStationEntity, SensorEntity):  # type: igno
 class DevicePowerSensor(EasyPVDeviceEntity, SensorEntity):  # type: ignore[misc]
     """Representation of a Sensor."""
 
-    device_class = SensorDeviceClass.POWER  # type: ignore[override]
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_suggested_display_precision = 2
     _attr_translation_key = "power"
@@ -166,7 +174,8 @@ class DevicePowerSensor(EasyPVDeviceEntity, SensorEntity):  # type: ignore[misc]
 class DeviceGridVoltageSensor(EasyPVDeviceEntity, SensorEntity):  # type: ignore[misc]
     """Representation of a Sensor."""
 
-    device_class = SensorDeviceClass.VOLTAGE  # type: ignore[override]
+    _attr_device_class = SensorDeviceClass.VOLTAGE
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
     _attr_suggested_display_precision = 2
     _attr_translation_key = "grid_voltage"
@@ -193,7 +202,8 @@ class DeviceGridVoltageSensor(EasyPVDeviceEntity, SensorEntity):  # type: ignore
 class DeviceEnergyTodaySensor(EasyPVDeviceEntity, SensorEntity):  # type: ignore[misc]
     """Representation of a Sensor."""
 
-    device_class = SensorDeviceClass.ENERGY  # type: ignore[override]
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_suggested_display_precision = 2
     _attr_translation_key = "energy_today"
@@ -216,7 +226,8 @@ class DeviceEnergyTodaySensor(EasyPVDeviceEntity, SensorEntity):  # type: ignore
 class DeviceEnergyMonthSensor(EasyPVDeviceEntity, SensorEntity):  # type: ignore[misc]
     """Representation of a Sensor."""
 
-    device_class = SensorDeviceClass.ENERGY  # type: ignore[override]
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_suggested_display_precision = 2
     _attr_translation_key = "energy_month"
@@ -233,13 +244,14 @@ class DeviceEnergyMonthSensor(EasyPVDeviceEntity, SensorEntity):  # type: ignore
     @property
     def native_value(self) -> float | None:  # type: ignore[override]
         """Return the state of the sensor."""
-        return self._data.energy_today if self._data else None
+        return self._data.energy_month if self._data else None
 
 
 class PanelPowerSensor(EasyPVPanelEntity, SensorEntity):  # type: ignore[misc]
     """Representation of a Sensor."""
 
-    device_class = SensorDeviceClass.POWER  # type: ignore[override]
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfPower.WATT
     _attr_translation_key = "power"
     _attr_has_entity_name = True
@@ -270,7 +282,8 @@ class PanelPowerSensor(EasyPVPanelEntity, SensorEntity):  # type: ignore[misc]
 class PanelVoltageSensor(EasyPVPanelEntity, SensorEntity):  # type: ignore[misc]
     """Representation of a Sensor."""
 
-    device_class = SensorDeviceClass.VOLTAGE  # type: ignore[override]
+    _attr_device_class = SensorDeviceClass.VOLTAGE
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
     _attr_translation_key = "voltage"
     _attr_has_entity_name = True
@@ -301,7 +314,8 @@ class PanelVoltageSensor(EasyPVPanelEntity, SensorEntity):  # type: ignore[misc]
 class PanelCurrentSensor(EasyPVPanelEntity, SensorEntity):  # type: ignore[misc]
     """Representation of a Sensor."""
 
-    device_class = SensorDeviceClass.CURRENT  # type: ignore[override]
+    _attr_device_class = SensorDeviceClass.CURRENT
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
     _attr_translation_key = "current"
     _attr_has_entity_name = True

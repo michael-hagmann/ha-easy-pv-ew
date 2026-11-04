@@ -37,6 +37,7 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 - `scripts/lint`: `ruff format` und `ruff check --fix`
 - `scripts/develop`: Test-Instanz auf Port 8123 starten (Skill `ha-testinstanz`)
 - `scripts/setup`: Abhängigkeiten aus `requirements_test.txt` installieren (läuft beim Erstellen des Containers)
+- Temporäre Dateien: `$TMPDIR` ist im Container leer, und das Scratchpad-Verzeichnis der Session existiert anfangs nicht. Vorher `mkdir -p` und prüfen, bevor man sich auf eine Sicherungskopie verlässt. Um alten Code testweise zu prüfen, lieber `git stash` oder `git worktree` statt Kopieren.
 
 ## Code-Konventionen
 
