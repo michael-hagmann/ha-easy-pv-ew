@@ -65,6 +65,10 @@ custom_components/easy_pv_ew/const.py
 
 ## Configuration is done in the UI
 
+## Development
+
+The devcontainer (`.devcontainer/devcontainer.json`) bind-mounts a host folder to `/workspaces/austausch`. Docker runs in WSL2, so the source is a WSL path: `/mnt/c/Users/<Windows user>/Projekte/ha-austausch`, with the user name taken from `${localEnv:USERNAME}`. The folder must exist on the host, otherwise the container does not start; create it or adjust/remove the mount before opening the container.
+
 ## Contributions are welcome!
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)

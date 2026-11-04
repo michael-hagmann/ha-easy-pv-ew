@@ -12,6 +12,7 @@ Die neue Session kennt nur, was im Repository und in den Memories steht. Erst le
 1. **Memories:** Das Verzeichnis `~/.claude/projects/-workspaces-ha-easy-pv-ew/memory/` mit `MEMORY.md` und den verlinkten Dateien. Ist es leer (z. B. nach einem Rebuild ohne Volume), das im Bericht erwähnen; die Arbeitsregeln stehen auch in `CLAUDE.md`.
 2. **Handover:** `docs/HANDOVER.md`, vollständig.
 3. **Offene Entscheidungen:** `docs/offene-entscheidungen.md`.
+3a. **Austauschordner** (siehe `CLAUDE.md`, „Austauschordner“): `/workspaces/austausch/LIESMICH.md` lesen und `an-code/` ansehen. Neue Dateien nach den Regeln dort abarbeiten (Briefing übernehmen und Änderungen nennen, danach nach `an-code/erledigt/` verschieben). Fehlt der Ordner, fehlt der Mount; das im Bericht nennen.
 4. **Git-Stand:**
 
    ```bash

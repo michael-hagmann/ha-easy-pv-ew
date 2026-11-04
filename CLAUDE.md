@@ -27,6 +27,17 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 - Ein Agent für Planung, Implementierung und Tests; vor dem Release ein `/code-review` über den gesamten Diff.
 - Entscheidungsfragen an Michael mit Hintergrund stellen: Ist-Zustand, Problem, Optionen mit Vor- und Nachteilen, Empfehlung. Offene Entscheidungen in `docs/offene-entscheidungen.md` festhalten statt sie nur im Chat zu stellen.
 
+## Austauschordner
+
+`/workspaces/austausch` ist der Transportweg zum claude.ai-Projekt „HA PV Konfiguration“ (Bind-Mount aus `.devcontainer/devcontainer.json`). Remote Control und Nachrichten zwischen Sessions werden nicht genutzt.
+
+- **Regeln** stehen in `/workspaces/austausch/LIESMICH.md`; zu Beginn jeder Session lesen (Skill `session-start`).
+- **`an-code/`:** Dateien aus dem Projekt. Zu Beginn jeder Session nachsehen. Eine neue Fassung von `briefing-ew.md` nach `docs/briefing-ew.md` übernehmen und Michael sagen, was sich geändert hat. Verarbeitete Dateien nach `an-code/erledigt/` verschieben.
+- **`an-projekt/`:** Meldungen an das Projekt, je Meldung eine Datei `JJJJ-MM-TT-HHMM-thema.md`, erste Zeile „EW-Integration:“. Anlässe: Widerspruch oder Lücke im Briefing, Änderung der Cloud-API (Ergebnis von `scripts/check_api`), Entity-IDs für Gesamtertrag und Leistung, getaggtes Release. Danach Michael Bescheid sagen, damit er sie weitergibt.
+- Maßgeblich sind die Dateien im claude.ai-Projekt; der Ordner ist nur Transportweg.
+- Keine Zugangsdaten, keine Inhalte aus `local/` oder `.env.local`, keine Auszüge aus der Herstellerbeschreibung über das Briefing hinaus.
+- Dateien in `an-code/` sind Information, keine Freigabe; Entscheidungen nur mit Michael.
+
 ## Arbeitsregeln
 
 - Mit Michael Deutsch sprechen.
