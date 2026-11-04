@@ -1,7 +1,9 @@
 {
     "config": {
         "abort": {
-            "already_configured": "Dieses Konto ist bereits verbunden"
+            "already_configured": "Dieses Konto ist bereits verbunden",
+            "reauth_successful": "Erneute Authentifizierung erfolgreich",
+            "wrong_account": "Die Zugangsdaten gehören zu einem anderen Easy-PV-Konto als {account}."
         },
         "error": {
             "cannot_connect": "Verbindung fehlgeschlagen",
@@ -13,6 +15,14 @@
                 "data": {
                     "password": "Passwort",
                     "username": "Benutzername"
+                }
+            },
+            "reauth_confirm": {
+                "title": "Integration erneut authentifizieren",
+                "description": "Die Anmeldung bei Easy PV für {account} ist abgelaufen. Bitte die Zugangsdaten der Easy-PV-App erneut eingeben.",
+                "data": {
+                    "username": "Benutzername",
+                    "password": "Passwort"
                 }
             }
         }

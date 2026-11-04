@@ -88,6 +88,7 @@ def config_entry() -> MockConfigEntry:
     return MockConfigEntry(
         domain=DOMAIN,
         title="Testkonto",
+        unique_id="test@example.com",
         data={"title": "Testkonto", "token": "test-token", "email": "test@example.com"},
     )
 

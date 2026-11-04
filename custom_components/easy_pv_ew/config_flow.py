@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
@@ -53,9 +54,30 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for EasyPV."""
+    """
+    Handle a config flow for EasyPV.
+
+    Only the token is stored, never the password. When the token expires,
+    the coordinator raises ConfigEntryAuthFailed and Home Assistant starts
+    the reauth flow below, which asks for the credentials again.
+    """
 
     VERSION = 1
+
+    async def _async_try_login(
+        self, user_input: dict[str, Any], errors: dict[str, str]
+    ) -> dict[str, Any] | None:
+        """Log in with the given credentials; fill errors and return None on failure."""
+        try:
+            return await validate_input(self.hass, user_input)
+        except CannotConnect:
+            errors["base"] = "cannot_connect"
+        except InvalidAuth:
+            errors["base"] = "invalid_auth"
+        except Exception:
+            _LOGGER.exception("Unexpected exception")
+            errors["base"] = "unknown"
+        return None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -63,21 +85,54 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the initial step."""
         errors: dict[str, str] = {}
         if user_input is not None:
-            try:
-                info = await validate_input(self.hass, user_input)
-            except CannotConnect:
-                errors["base"] = "cannot_connect"
-            except InvalidAuth:
-                errors["base"] = "invalid_auth"
-            except Exception:
-                _LOGGER.exception("Unexpected exception")
-                errors["base"] = "unknown"
-            else:
+            info = await self._async_try_login(user_input, errors)
+            if info is not None:
+                await self.async_set_unique_id(_account_id(info))
+                self._abort_if_unique_id_configured()
                 return self.async_create_entry(title=info["title"], data=info)
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
+
+    async def async_step_reauth(
+        self, _entry_data: Mapping[str, Any]
+    ) -> ConfigFlowResult:
+        """Start reauthentication after the token was rejected."""
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ask for the credentials again and store the new token."""
+        entry = self._get_reauth_entry()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            info = await self._async_try_login(user_input, errors)
+            if info is not None:
+                account_id = _account_id(info)
+                if entry.unique_id is not None and entry.unique_id != account_id:
+                    return self.async_abort(
+                        reason="wrong_account",
+                        description_placeholders={"account": entry.title},
+                    )
+                if entry.unique_id is None:
+                    self.hass.config_entries.async_update_entry(
+                        entry, unique_id=account_id
+                    )
+                return self.async_update_reload_and_abort(entry, data_updates=info)
+
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=STEP_USER_DATA_SCHEMA,
+            description_placeholders={"account": entry.title},
+            errors=errors,
+        )
+
+
+def _account_id(info: dict[str, Any]) -> str:
+    """Return a stable ID for the Easy PV account (used as unique_id)."""
+    return str(info.get("email") or info["title"]).strip().lower()
 
 
 class CannotConnect(HomeAssistantError):  # noqa: N818
