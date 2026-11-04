@@ -21,7 +21,7 @@ Die neue Session kennt nur, was im Repository und in den Memories steht. Erst le
    git stash list
    ```
 
-5. Das Briefing (`docs/briefing-ew.md`) nur lesen, wenn der nächste Schritt es braucht oder das Handover darauf verweist.
+5. Das Briefing (`docs/briefing-ew.md`) wird über `CLAUDE.md` automatisch geladen. Hat es sich seit dem letzten Handover geändert (`git log -1 --format=%ci -- docs/briefing-ew.md` oder uncommittete Änderung), mit Handover und Code abgleichen und Widersprüche im Bericht nennen.
 
 ## 2. Abgleichen
 

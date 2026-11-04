@@ -2,7 +2,12 @@
 
 Home-Assistant-Integration für den Balkonkraftwerk-Wechselrichter Electronic Way (EW) VN2T08EU über die Easy-PV-Cloud.
 
-**Auftrag, Anforderungen und Ablauf: `docs/briefing-ew.md`.** Vor der Arbeit lesen; bei Widersprüchen gilt das Briefing.
+**Auftrag, Anforderungen und Ablauf: `docs/briefing-ew.md`** (wird unten importiert und damit in jeder Session geladen).
+
+- Das Briefing im Repository ist eine **Kopie**. Die führende Fassung liegt im claude.ai-Projekt „HA PV Konfiguration“ (`claude/ew-integration-briefing.md`); Michael erneuert die Kopie bei Änderungen. Die Kopie nicht selbst inhaltlich ändern, sondern Änderungswünsche an Michael melden.
+- Bei Widersprüchen zwischen dieser Datei und dem Briefing: bei Michael nachfragen, nicht selbst auflösen.
+
+@docs/briefing-ew.md
 
 ## Arbeit über mehrere Sessions
 
@@ -26,6 +31,9 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 
 - Mit Michael Deutsch sprechen.
 - Vor jedem schreibenden Schritt außerhalb des Repositorys (z. B. Push, Release, Änderungen an einer HA-Instanz) zeigen, was passiert, und auf Michaels OK warten. Änderungen im Repository dürfen ohne Rückfrage erfolgen; Commits mit aussagekräftiger Nachricht.
+- **Nur lesend gegenüber der Cloud.** Die Integration nutzt ausschließlich die Endpunkte für das eigene Konto: Anmeldung (`passLogin`), Benutzerdaten (`selectUserInfo`), Stationsliste (`getStationList`), Geräteliste (`getPowerList`), Gerätedaten (`getDeviceDataInfo`). Nie Gerätebefehle, Leistungsbegrenzung, Firmware-Updates, Einstellungen oder Partner-/Händler-/Verwaltungs-Endpunkte („Open API“, DMP), auch wenn die OpenAPI-Beschreibung sie zeigt.
+- **Abrufintervall nie unter 60 s**, auch nicht als einstellbare Option; keine Abfragen außerhalb des normalen Betriebs.
+- **Die OpenAPI-Beschreibung des Herstellers kommt nicht ins Repository** (der Fork ist öffentlich, die Beschreibung ist eine interne Unterlage des Herstellers). Maßgeblich ist der Auszug im Briefing. Legt Michael sie lokal im Arbeitsverzeichnis ab, den Pfad vor dem nächsten Commit in `.gitignore` aufnehmen und prüfen, dass sie nicht gestaged ist.
 - Zugangsdaten der Easy-PV-App gibt Michael selbst in HA ein. Nie im Chat erfragen, nie in Code, Tests, Fixtures oder Logs ablegen. Rohantworten für Fixtures anonymisieren (Seriennummern, Standort, Konto).
 - `config/` enthält Laufzeitdaten der Test-Instanz und gehört nicht ins Repository, ausgenommen `config/configuration.yaml`.
 - Entwickelt und getestet wird im Devcontainer gegen die dortige Test-Instanz (siehe „Umgebung“). Die produktive HA-Instanz auf der NAS wird nicht angefasst.
@@ -61,7 +69,7 @@ Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcon
 
 ## Schnittstelle zum Energie-Setup (Kurzfassung)
 
-- Gesamtertrag des EW: kWh, `device_class: energy`, `state_class: total_increasing`, absolut seit Inbetriebnahme, nie ein Rücksprung, stabile Entity-ID.
+- Gesamtertrag des EW: kWh aus `genPowerTotal` von `getDeviceDataInfo` (laut Beschreibung Wh, also / 1000; die Einheit an echten Daten prüfen, im MQTT-Telegramm des Geräts ist es kWh), `device_class: energy`, `state_class: total_increasing`, absolut seit Inbetriebnahme, nie ein Rücksprung, stabile Entity-ID.
 - Leistung des EW: W, `device_class: power`, `state_class: measurement`.
 - Bei Cloud-Ausfall lieber `unavailable` als falsche Werte.
 
