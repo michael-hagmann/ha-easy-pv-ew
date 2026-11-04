@@ -22,7 +22,7 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
     """My custom coordinator."""
 
     def __init__(
-        self, hass: HomeAssistant, config_entry: ConfigEntry["EasyPVCoordinator"]
+        self, hass: HomeAssistant, config_entry: ConfigEntry[EasyPVCoordinator]
     ) -> None:
         """Initialize my coordinator."""
         super().__init__(
