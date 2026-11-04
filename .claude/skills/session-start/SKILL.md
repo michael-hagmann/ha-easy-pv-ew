@@ -25,14 +25,29 @@ Die neue Session kennt nur, was im Repository und in den Memories steht. Erst le
 
 ## 2. Abgleichen
 
-- **Handover gegen Git:** Der „Stand“ nennt den letzten Commit vor dem Handover. Danach wird genau ein Commit erwartet, der das Handover schreibt (`git log --oneline <hash>..HEAD`). Gibt es weitere, ist das Handover veraltet. Michael darauf hinweisen und aus den Commit-Nachrichten den tatsächlichen Stand ableiten.
+- **Handover gegen Git:** Commits nach der letzten Änderung des Handovers bedeuten, dass es veraltet ist:
+
+  ```bash
+  git log --oneline "$(git log -1 --format=%H -- docs/HANDOVER.md)"..HEAD
+  ```
+
+  Ist die Ausgabe nicht leer, Michael darauf hinweisen und aus den Commit-Nachrichten den tatsächlichen Stand ableiten. Uncommittete Änderungen an `docs/HANDOVER.md` sind der neueste Stand der Vorsession und gelten.
 - **Arbeitsverzeichnis:** Uncommittete Änderungen oder Stashes bedeuten halbfertige Arbeit aus der letzten Session. Nicht verwerfen, im Bericht nennen.
 - **Umgebung, kurz:** `python --version` (erwartet 3.14) und `scripts/test` (läuft schnell). Scheitert etwas, ist das der erste Punkt im Bericht.
 
-## 3. Bericht an Michael
+## 3. Session-Kennung festlegen
+
+```bash
+date +%Y-%m-%d_%H%M
+```
+
+Diese Kennung gilt für die ganze Session. Der Skill `handover-pflegen` braucht sie, um bei der ersten Änderung des Handovers den Stand der Vorsession zu archivieren. Jetzt noch **nichts archivieren und das Handover nicht ändern**: Eine Session, die nur liest, hinterlässt kein Archiv.
+
+## 4. Bericht an Michael
 
 Kurz und auf Deutsch, höchstens etwa zehn Zeilen:
 
+- Session-Kennung
 - wo wir stehen (Schritt laut Briefing, letzter Commit)
 - was laut Handover als Nächstes kommt
 - was auf Michael wartet: offene Entscheidungen, deren Zeitpunkt gekommen ist; ungepushte Commits (Push nur mit OK)

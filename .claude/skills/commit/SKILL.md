@@ -31,7 +31,11 @@ Nichts davon darf im Diff stehen, auch nicht in Tests, Fixtures, Kommentaren ode
 
 Bei Fixtures aus echten Antworten vorher den Skill `fixture-anonymisieren` anwenden.
 
-## 3. Commit-Nachricht
+## 3. Handover
+
+Ändert der Commit den Projektstand (erledigter Punkt, neuer nächster Schritt, neue offene Frage), vorher den Skill `handover-pflegen` anwenden und `docs/HANDOVER.md` mitcommitten. Beim ersten Mal in einer neuen Session archiviert er dabei den Stand der Vorsession.
+
+## 4. Commit-Nachricht
 
 - Deutsch, erste Zeile kurz und konkret (was und warum, Bezug zum Briefing wie „(Fehler 3)“).
 - Danach eine Liste der wesentlichen Änderungen, gern mit Begründung bei nicht offensichtlichen Entscheidungen.
@@ -44,7 +48,6 @@ git commit -F - <<'EOF'
 EOF
 ```
 
-## 4. Danach
+## 5. Danach
 
-- Kurz melden: Commit-Hash, was drin ist, Teststand.
-- Wurde ein Punkt aus `docs/HANDOVER.md` erledigt, das Handover im selben oder nächsten Commit abhaken.
+Kurz melden: Commit-Hash, was drin ist, Teststand.

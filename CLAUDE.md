@@ -8,13 +8,15 @@ Home-Assistant-Integration für den Balkonkraftwerk-Wechselrichter Electronic Wa
 
 Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 
-- **Zu Beginn jeder Session** den Skill `session-start` anwenden, bevor an Code gearbeitet wird: Memories, `docs/HANDOVER.md`, `docs/offene-entscheidungen.md` und Git-Log lesen und abgleichen.
-- **Am Ende einer Session** oder bei vollem Kontext den Skill `session-ende` anwenden. Er archiviert das alte Handover in `docs/handover-archiv/` und schreibt es neu; das Handover enthält nur, was die nächste Session braucht.
+- **Zu Beginn jeder Session** den Skill `session-start` anwenden, bevor an Code gearbeitet wird: Memories, `docs/HANDOVER.md`, `docs/offene-entscheidungen.md` und Git-Log lesen, abgleichen, Session-Kennung festlegen.
+- **Während der Session** das Handover laufend pflegen (Skill `handover-pflegen`, bei jedem Commit über `commit`), damit es auch bei einem unerwarteten Ende aktuell ist. Bei der ersten Änderung in einer neuen Session wird der Stand der Vorsession nach `docs/handover-archiv/` archiviert. Das Handover enthält nur, was die nächste Session braucht.
+- **Am Ende einer Session** oder bei vollem Kontext den Skill `session-ende` anwenden, um Wissen einzuordnen und das Handover aufzuräumen.
 - Dauerhaftes Wissen gehört ins Repository (diese Datei, Handover, Skills), nicht nur in Memories. `~/.claude` liegt erst seit dem Volume in `.devcontainer/devcontainer.json` außerhalb des Containers.
 - Wiederkehrende Abläufe als Skill unter `.claude/skills/` ablegen. Vorhanden:
   - `session-start`: Einstieg in eine Session, Stand abgleichen und berichten
   - `commit`: Lint, Tests, Prüfung auf vertrauliche Daten, Commit-Nachricht
-  - `session-ende`: Wissen einordnen, Handover archivieren und neu schreiben
+  - `handover-pflegen`: Handover aktuell halten, Vorsession archivieren
+  - `session-ende`: Wissen einordnen, Handover aufräumen
   - `ha-testinstanz`: Test-Instanz starten, Log auswerten (Schritt 6)
   - `fixture-anonymisieren`: echte API-Antworten in Fixtures überführen (Schritt 6)
 - Ein Agent für Planung, Implementierung und Tests; vor dem Release ein `/code-review` über den gesamten Diff.
