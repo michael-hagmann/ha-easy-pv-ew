@@ -8,12 +8,13 @@ Home-Assistant-Integration für den Balkonkraftwerk-Wechselrichter Electronic Wa
 
 Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 
-- **Zu Beginn jeder Session** `docs/HANDOVER.md` (aktueller Stand, nächster Schritt) und `docs/offene-entscheidungen.md` lesen.
-- **Am Ende einer Session** oder bei vollem Kontext den Skill `session-ende` anwenden.
+- **Zu Beginn jeder Session** den Skill `session-start` anwenden, bevor an Code gearbeitet wird: Memories, `docs/HANDOVER.md`, `docs/offene-entscheidungen.md` und Git-Log lesen und abgleichen.
+- **Am Ende einer Session** oder bei vollem Kontext den Skill `session-ende` anwenden. Er archiviert das alte Handover in `docs/handover-archiv/` und schreibt es neu; das Handover enthält nur, was die nächste Session braucht.
 - Dauerhaftes Wissen gehört ins Repository (diese Datei, Handover, Skills), nicht nur in Memories. `~/.claude` liegt erst seit dem Volume in `.devcontainer/devcontainer.json` außerhalb des Containers.
 - Wiederkehrende Abläufe als Skill unter `.claude/skills/` ablegen. Vorhanden:
+  - `session-start`: Einstieg in eine Session, Stand abgleichen und berichten
   - `commit`: Lint, Tests, Prüfung auf vertrauliche Daten, Commit-Nachricht
-  - `session-ende`: Handover und Übergabe an die nächste Session
+  - `session-ende`: Wissen einordnen, Handover archivieren und neu schreiben
   - `ha-testinstanz`: Test-Instanz starten, Log auswerten (Schritt 6)
   - `fixture-anonymisieren`: echte API-Antworten in Fixtures überführen (Schritt 6)
 - Ein Agent für Planung, Implementierung und Tests; vor dem Release ein `/code-review` über den gesamten Diff.
