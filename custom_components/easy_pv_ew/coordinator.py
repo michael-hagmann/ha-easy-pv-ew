@@ -3,6 +3,7 @@
 import logging
 from asyncio import timeout
 from datetime import datetime, timedelta
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -14,7 +15,12 @@ from homeassistant.helpers.update_coordinator import (
 )
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN, STALE_DATA_GRACE
+from .const import (
+    CONF_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    STALE_DATA_GRACE,
+)
 from .easy_pv import BaseError, EasyPVClient, LoginError
 from .model import PVDevice, PVPanel, PVStation
 
@@ -33,12 +39,19 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
             LOGGER,
             name="EasyPV Coordinator",
             config_entry=config_entry,
-            update_interval=timedelta(seconds=60),
+            update_interval=timedelta(
+                seconds=config_entry.options.get(
+                    CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+                )
+            ),
             always_update=True,
         )
         self._config_entry = config_entry
         self._client = EasyPVClient(async_get_clientsession(hass))
         self._last_success: datetime | None = None
+        # Raw API responses of the last successful update, for diagnostics.
+        self.raw_data: dict[str, Any] = {}
+        self._raw_pending: dict[str, Any] = {}
 
     @property
     def is_logged_in(self) -> bool:
@@ -48,6 +61,8 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
     async def fetch_device(self, station_id: str, device_id: str) -> PVDevice:
         """Fetch a specific device by its ID."""
         data = await self._client.get_device_data(station_id, device_id)
+        # Lists, not dicts keyed by ID: redact() works on field names only.
+        self._raw_pending.setdefault("device_data", []).append(data)
 
         return PVDevice(
             entity_id=f"{station_id}_{device_id}",
@@ -80,11 +95,13 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
     async def _fetch_devices(self, station_id: str) -> list[PVDevice]:
         """Fetch the list of devices for a given station."""
         data = await self._client.get_station_devices(station_id)
+        self._raw_pending.setdefault("station_devices", []).append(data)
         return [await self.fetch_device(station_id, device["id"]) for device in data]
 
     async def _fetch_stations(self) -> list[PVStation]:
         """Fetch the list of PV stations from the API."""
         data = await self._client.get_stations()
+        self._raw_pending["stations"] = data
         return [
             PVStation(
                 entity_id=station["id"],
@@ -117,6 +134,7 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
 
     async def _async_update_data(self) -> dict[str, PVStation]:
         """Fetch data from API endpoint."""
+        self._raw_pending = {}
         try:
             async with timeout(20):
                 data = {station.id: station for station in await self._fetch_stations()}
@@ -132,7 +150,13 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
             raise _cannot_connect(err) from err
 
         self._last_success = dt_util.utcnow()
+        self.raw_data = self._raw_pending
         return data
+
+    @property
+    def last_success(self) -> datetime | None:
+        """Return the time of the last successful update."""
+        return self._last_success
 
     def _within_grace(self) -> bool:
         """Return True if the last successful update is recent enough to reuse."""

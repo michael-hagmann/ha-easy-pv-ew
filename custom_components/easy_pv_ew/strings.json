@@ -79,5 +79,19 @@
     "auth_failed": {
       "message": "The Easy PV login has expired, please reauthenticate."
     }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "description": "Settings of the Easy PV (EW) integration.",
+        "data": {
+          "scan_interval": "Polling interval (seconds)"
+        },
+        "data_description": {
+          "scan_interval": "How often the Easy PV cloud is queried. 30 to 300 seconds, default 60."
+        }
+      }
+    }
   }
 }
