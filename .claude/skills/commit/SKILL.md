@@ -29,6 +29,7 @@ Nichts davon darf im Diff stehen, auch nicht in Tests, Fixtures, Kommentaren ode
 
 - Easy-PV-Zugangsdaten, echte Tokens (Fixtures verwenden `test-token`)
 - echte Seriennummern, Geräte- oder Stations-IDs, Standort, Adresse, Koordinaten, Kontoname, E-Mail
+- Michaels Windows-Benutzername, Pfade unter `C:\Users\…` oder `/mnt/c/Users/…` (in Beispielen `<Benutzername>`)
 - Dateien aus `config/` außer `config/configuration.yaml`
 - Dateien aus `local/` (OpenAPI-Beschreibung des Herstellers), `.env.local` oder die Adresse der Beschreibung
 
@@ -51,6 +52,17 @@ git commit -F - <<'EOF'
 EOF
 ```
 
-## 5. Danach
+## 5. Vor einem Push
+
+Nur mit Michaels OK. Vorher **alle** ungepushten Commits prüfen, nicht nur den letzten, denn auch Commits aus Vorsessionen gehen mit:
+
+```bash
+git log --oneline origin/master..HEAD
+git log -p origin/master..HEAD   # auf die Punkte aus Abschnitt 2 durchsehen
+```
+
+Was einmal auf GitHub liegt, bleibt per SHA abrufbar, auch nach Umschreiben der Historie.
+
+## 6. Danach
 
 Kurz melden: Commit-Hash, was drin ist, Teststand.
