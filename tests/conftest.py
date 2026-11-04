@@ -40,23 +40,37 @@ def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
 
 
 def register_api(
-    aioclient_mock: AiohttpClientMocker, *, energy_total: float | None = None
+    aioclient_mock: AiohttpClientMocker,
+    *,
+    energy_total: float | None = None,
+    device_total_wh: float | None = None,
+    device_status: int | None = None,
+    device_data: dict[str, Any] | None = None,
 ) -> None:
     """
     Replace all registered responses with successful ones.
 
-    ``energy_total`` overrides ``powerTotals`` of the station.
+    ``energy_total`` overrides ``powerTotals`` of the station (kWh),
+    ``device_total_wh`` ``genPowerTotal`` of the inverter (Wh) and
+    ``device_status`` its ``status``; ``device_data`` replaces the whole
+    getDeviceDataInfo response.
     """
     aioclient_mock.clear_requests()
     stations = load_fixture("station_list.json")
     if energy_total is not None:
         stations["data"]["rows"][0]["powerTotals"] = energy_total
+    if device_data is None:
+        device_data = load_fixture("device_data.json")
+    if device_total_wh is not None:
+        device_data["data"]["genPowerTotal"] = device_total_wh
+    if device_status is not None:
+        device_data["data"]["status"] = device_status
 
     aioclient_mock.post(URL_LOGIN, json=load_fixture("login.json"))
     aioclient_mock.get(URL_USER_INFO, json=load_fixture("user_info.json"))
     aioclient_mock.get(URL_STATIONS, json=stations)
     aioclient_mock.get(URL_DEVICES, json=load_fixture("power_list.json"))
-    aioclient_mock.get(URL_DEVICE_DATA, json=load_fixture("device_data.json"))
+    aioclient_mock.get(URL_DEVICE_DATA, json=device_data)
 
 
 def sensor_entity_id(hass: HomeAssistant, unique_id: str) -> str:

@@ -13,7 +13,8 @@
         "longitude": "8.0",
         "genPower": 512.0,
         "todayPowerTotals": 1.25,
-        "powerTotals": 123.45
+        "powerTotals": 123.45,
+        "status": 1
       }
     ]
   }

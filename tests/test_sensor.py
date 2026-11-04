@@ -10,9 +10,14 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorStateClass,
 )
-from homeassistant.const import ATTR_DEVICE_CLASS, ATTR_UNIT_OF_MEASUREMENT
+from homeassistant.const import (
+    ATTR_DEVICE_CLASS,
+    ATTR_UNIT_OF_MEASUREMENT,
+    EntityCategory,
+)
+from homeassistant.helpers import entity_registry as er
 
-from .conftest import sensor_state
+from .conftest import sensor_entity_id, sensor_state
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -34,11 +39,15 @@ PANEL_1 = "1001_2001_panel_1"
         (f"{DEVICE}_power", "512.0", "power", "measurement", "W"),
         (f"{DEVICE}_energy_today", "1.25", "energy", "total_increasing", "kWh"),
         (f"{DEVICE}_energy_month", "8.5", "energy", "total_increasing", "kWh"),
+        (f"{DEVICE}_energy_total", "123.45", "energy", "total_increasing", "kWh"),
         (f"{DEVICE}_grid_voltage", "230.4", "voltage", "measurement", "V"),
         # Panel bzw. MPPT-Eingang
         (f"{PANEL_1}_power", "260.0", "power", "measurement", "W"),
         (f"{PANEL_1}_voltage", "36.6", "voltage", "measurement", "V"),
         (f"{PANEL_1}_current", "7.1", "current", "measurement", "A"),
+        (f"{PANEL_1}_energy_total", "62.0", "energy", "total_increasing", "kWh"),
+        (f"{PANEL_1}_temperature", "35.5", "temperature", "measurement", "°C"),
+        (f"{PANEL_1}_frequency", "49.98", "frequency", "measurement", "Hz"),
     ],
 )
 @pytest.mark.usefixtures("setup_integration")
@@ -74,3 +83,25 @@ async def test_second_panel_created(
 ) -> None:
     """Both MPPT inputs of the VN2T08EU get their own sensors."""
     assert sensor_state(hass, "1001_2001_panel_2_power").state == "252.0"
+
+
+@pytest.mark.usefixtures("setup_integration")
+async def test_energy_in_wh_converted_to_kwh(hass: HomeAssistant) -> None:
+    """GetDeviceDataInfo reports Wh (OpenAPI); the sensors show kWh."""
+    assert sensor_state(hass, f"{DEVICE}_energy_today").state == "1.25"
+    assert sensor_state(hass, f"{DEVICE}_energy_total").state == "123.45"
+
+
+@pytest.mark.parametrize(
+    ("unique_id", "value"),
+    [(f"{DEVICE}_firmware_app", "1.0.0"), (f"{DEVICE}_firmware_net", "2.0.0")],
+)
+@pytest.mark.usefixtures("setup_integration")
+async def test_firmware_diagnostics(
+    hass: HomeAssistant, unique_id: str, value: str
+) -> None:
+    """Firmware versions are diagnostic sensors."""
+    assert sensor_state(hass, unique_id).state == value
+    entry = er.async_get(hass).async_get(sensor_entity_id(hass, unique_id))
+    assert entry is not None
+    assert entry.entity_category is EntityCategory.DIAGNOSTIC

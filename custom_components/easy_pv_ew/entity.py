@@ -10,7 +10,16 @@ from .model import PVDevice, PVEntity, PVPanel, PVStation
 
 
 class EasyPVEntity[T](CoordinatorEntity[EasyPVCoordinator]):
-    """Base representation of an Easy PV entity."""
+    """
+    Base representation of an Easy PV entity.
+
+    Live measurements (power, voltage, current, ...) set ``_requires_online``:
+    while the cloud reports the station or inverter offline or faulty, their
+    last values are stale and the entity is unavailable. Energy counters stay
+    available, their values remain valid.
+    """
+
+    _requires_online = False
 
     def __init__(self, coordinator: EasyPVCoordinator) -> None:
         """Initialize the sensor."""
@@ -19,6 +28,11 @@ class EasyPVEntity[T](CoordinatorEntity[EasyPVCoordinator]):
     @property
     def _data(self) -> T | None:
         raise NotImplementedError("_data not implemented in subclasses")
+
+    @property
+    def _is_online(self) -> bool:
+        """Return False if the cloud reports the source offline."""
+        return True
 
     @property
     def _id(self) -> str | None:
@@ -56,6 +70,7 @@ class EasyPVEntity[T](CoordinatorEntity[EasyPVCoordinator]):
             super().available
             and self.coordinator.is_logged_in
             and self._data is not None
+            and (not self._requires_online or self._is_online)
         )
 
     def _handle_update(self) -> None:
@@ -74,6 +89,11 @@ class EasyPVStationEntity(EasyPVEntity[PVStation]):
     def _data(self) -> PVStation | None:
         return self.coordinator.get_station(self._station_id)
 
+    @property
+    def _is_online(self) -> bool:
+        station = self._data
+        return station is not None and station.is_online
+
     def __init__(
         self,
         coordinator: EasyPVCoordinator,
@@ -91,6 +111,11 @@ class EasyPVDeviceEntity(EasyPVEntity[PVDevice]):
     @property
     def _data(self) -> PVDevice | None:
         return self.coordinator.get_device(self._station_id, self._device_id)
+
+    @property
+    def _is_online(self) -> bool:
+        device = self._data
+        return device is not None and device.is_online
 
     @property
     def _device_info(self) -> DeviceInfo | None:
@@ -126,6 +151,11 @@ class EasyPVPanelEntity(EasyPVEntity[PVPanel]):
         return self.coordinator.get_panel(
             self._station_id, self._device_id, self._panel_number
         )
+
+    @property
+    def _is_online(self) -> bool:
+        device = self.coordinator.get_device(self._station_id, self._device_id)
+        return device is not None and device.is_online
 
     @property
     def _device_info(self) -> DeviceInfo | None:

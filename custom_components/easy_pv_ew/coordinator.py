@@ -1,6 +1,7 @@
 """Coordinator for EasyPV integration."""
 
 import logging
+import math
 from asyncio import timeout
 from datetime import datetime, timedelta
 from typing import Any
@@ -25,6 +26,10 @@ from .easy_pv import BaseError, EasyPVClient, LoginError
 from .model import PVDevice, PVPanel, PVStation
 
 LOGGER = logging.getLogger(__name__)
+
+# getDeviceDataInfo reports energy in Wh according to the OpenAPI description
+# (the MQTT telegram of the device uses kWh). Verify with real data.
+WH_PER_KWH = 1000
 
 
 class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
@@ -70,8 +75,10 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
             id=device_id,
             station_id=station_id,
             power=data["genPower"],
-            energy_month=data["genpowerMonthTotals"],
-            energy_today=data["genpowerTodayTotals"],
+            energy_month=_wh_to_kwh(data.get("genpowerMonthTotals")),
+            energy_today=_wh_to_kwh(data.get("genpowerTodayTotals")),
+            energy_total=_wh_to_kwh(data.get("genPowerTotal")),
+            status=_status(data.get("status")),
             product_code=data["productCode"],
             device_serial=data["deviceNum"],
             grid_voltage=data["gridVoltage"],
@@ -87,6 +94,9 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
                     power=panel_data["genPower"],
                     current=panel_data["current"],
                     voltage=panel_data["voltage"],
+                    energy_total=_wh_to_kwh(panel_data.get("genpowerTotals")),
+                    temperature=_number(panel_data.get("temp")),
+                    frequency=_number(panel_data.get("freq")),
                 )
                 for panel_data in data.get("devicePhotovoltaicPanel", [])
             ],
@@ -110,11 +120,12 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
                 name=station["name"],
                 address=station["address"],
                 location=station["plantLocation"],
-                latitude=station["latitude"],
-                longitude=station["longitude"],
+                latitude=_number(station.get("latitude")),
+                longitude=_number(station.get("longitude")),
                 power=station["genPower"],
                 energy_today=station["todayPowerTotals"],
                 energy_total=station["powerTotals"],
+                status=_status(station.get("status")),
                 devices={
                     device.id: device
                     for device in await self._fetch_devices(station["id"])
@@ -211,3 +222,26 @@ def _cannot_connect(err: Exception) -> UpdateFailed:
         translation_key="cannot_connect",
         translation_placeholders={"error": str(err) or type(err).__name__},
     )
+
+
+def _number(value: Any) -> float | None:
+    """Return value as float, or None if missing or not a finite number."""
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except TypeError, ValueError:
+        return None
+    return number if math.isfinite(number) else None
+
+
+def _wh_to_kwh(value: Any) -> float | None:
+    """Convert an energy value in Wh from the cloud to kWh."""
+    number = _number(value)
+    return None if number is None else number / WH_PER_KWH
+
+
+def _status(value: Any) -> int | None:
+    """Return the status code, or None if missing or not a number."""
+    number = _number(value)
+    return None if number is None else int(number)

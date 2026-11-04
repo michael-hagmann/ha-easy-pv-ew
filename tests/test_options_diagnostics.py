@@ -38,11 +38,11 @@ async def test_scan_interval_option(
     assert setup_integration.runtime_data.update_interval == timedelta(seconds=120)
 
 
-@pytest.mark.parametrize("value", [10, 600])
+@pytest.mark.parametrize("value", [10, 30, 59, 241, 600])
 async def test_scan_interval_limits(
     hass: HomeAssistant, setup_integration: MockConfigEntry, value: int
 ) -> None:
-    """Intervals outside 30-300 seconds are rejected."""
+    """Intervals outside 60-240 seconds are rejected (never below 60 s)."""
     result = await hass.config_entries.options.async_init(setup_integration.entry_id)
 
     with pytest.raises(vol.Invalid):
@@ -60,7 +60,7 @@ async def test_diagnostics_anonymized(
 
     raw = diagnostics["raw_data"]
     assert raw["stations"][0]["powerTotals"] == 123.45
-    assert raw["device_data"][0]["genpowerMonthTotals"] == 8.5
+    assert raw["device_data"][0]["genpowerMonthTotals"] == 8500
     assert diagnostics["coordinator"]["last_update_success"] is True
     for secret in (
         "1001",

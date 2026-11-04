@@ -43,6 +43,14 @@
         }
     },
     "entity": {
+        "binary_sensor": {
+            "online": {
+                "name": "Online"
+            },
+            "fault": {
+                "name": "Störung"
+            }
+        },
         "sensor": {
             "power": {
                 "name": "Leistung"
@@ -64,6 +72,12 @@
             },
             "grid_voltage": {
                 "name": "Netzspannung"
+            },
+            "firmware_app": {
+                "name": "Firmware (App)"
+            },
+            "firmware_net": {
+                "name": "Firmware (Netzwerk)"
             }
         },
         "device_tracker": {
@@ -89,7 +103,7 @@
                     "scan_interval": "Abrufintervall (Sekunden)"
                 },
                 "data_description": {
-                    "scan_interval": "Wie oft die Easy-PV-Cloud abgefragt wird. 30 bis 300 Sekunden, Standard 60."
+                    "scan_interval": "Wie oft die Easy-PV-Cloud abgefragt wird. 60 bis 240 Sekunden, Standard 60."
                 }
             }
         }
