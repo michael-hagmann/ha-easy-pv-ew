@@ -23,6 +23,7 @@ from .const import (
     STALE_DATA_GRACE,
 )
 from .easy_pv import BaseError, EasyPVClient, InvalidResponseError, LoginError
+from .easy_pv.validate import ResponseValidator
 from .model import PVDevice, PVPanel, PVStation
 
 LOGGER = logging.getLogger(__name__)
@@ -57,6 +58,8 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
         # Raw API responses of the last successful update, for diagnostics.
         self.raw_data: dict[str, Any] = {}
         self._raw_pending: dict[str, Any] = {}
+        # Checks every response; logs each problem once per start.
+        self._validator = ResponseValidator()
 
     @property
     def is_logged_in(self) -> bool:
@@ -68,6 +71,7 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
         data = await self._client.get_device_data(station_id, device_id)
         # Lists, not dicts keyed by ID: redact() works on field names only.
         self._raw_pending.setdefault("device_data", []).append(data)
+        data = self._validator.sanitize("device_data", data)
         try:
             return _parse_device(station_id, device_id, data)
         except (KeyError, TypeError, ValueError, AttributeError) as err:
@@ -77,6 +81,7 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
         """Fetch the list of devices for a given station."""
         data = await self._client.get_station_devices(station_id)
         self._raw_pending.setdefault("station_devices", []).append(data)
+        data = self._validator.sanitize("device_list", data)
         try:
             device_ids = [str(device["id"]) for device in data]
         except (KeyError, TypeError) as err:
@@ -89,6 +94,7 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
         """Fetch the list of PV stations from the API."""
         data = await self._client.get_stations()
         self._raw_pending["stations"] = data
+        data = self._validator.sanitize("station_list", data)
         stations = []
         for station in data:
             try:

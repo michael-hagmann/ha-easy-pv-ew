@@ -18,6 +18,12 @@
 # verified: false, solange der Wert nicht an echten Daten geprüft ist
 #           (Schritt 7 im Briefing).
 # optional: true, wenn der Code ohne das Feld auskommt.
+# range:    plausibler Bereich [min, max]; Werte außerhalb gelten zur Laufzeit
+#           als ungültig (Warnung, Entität unavailable). Großzügig gewählt,
+#           soll nur offensichtlich falsche Werte abfangen.
+#
+# Zur Laufzeit prüft custom_components/easy_pv_ew/easy_pv/validate.py die
+# Antworten; tests/test_validate.py hält es mit diesem Vertrag gleich.
 
 version: 1
 updated: 2026-11-04
@@ -90,17 +96,20 @@ endpoints:
         optional: true
       data.rows[].genPower:
         type: number
+        range: [0, 100000]
         unit: W
         optional: true
         verified: false
       data.rows[].todayPowerTotals:
         type: number
+        range: [0, 10000]
         unit: kWh
         optional: true
         verified: false
         note: Einheit in der Beschreibung nicht angegeben; der Code liest kWh.
       data.rows[].powerTotals:
         type: number
+        range: [0, 10000000]
         unit: kWh
         optional: true
         verified: false
@@ -148,26 +157,31 @@ endpoints:
         note: 1 online, 2 offline, 3 Störung
       data.genPower:
         type: number
+        range: [0, 5000]
         unit: W
         optional: true
       data.genPowerTotal:
         type: number
+        range: [0, 1000000000]
         unit: Wh
         optional: true
         verified: false
         note: Gesamtzähler für das Energie-Setup; im MQTT-Telegramm kWh.
       data.genpowerTodayTotals:
         type: number
+        range: [0, 100000]
         unit: Wh
         optional: true
         verified: false
       data.genpowerMonthTotals:
         type: number
+        range: [0, 3000000]
         unit: Wh
         optional: true
         verified: false
       data.gridVoltage:
         type: number
+        range: [0, 300]
         unit: V
         optional: true
       data.appFirmVer:
@@ -185,26 +199,32 @@ endpoints:
         note: Nummer des Eingangs, ab 1
       data.devicePhotovoltaicPanel[].genPower:
         type: number
+        range: [0, 2000]
         unit: W
         optional: true
       data.devicePhotovoltaicPanel[].genpowerTotals:
         type: number
+        range: [0, 1000000000]
         unit: Wh
         optional: true
         verified: false
       data.devicePhotovoltaicPanel[].current:
         type: number
+        range: [0, 30]
         unit: A
         optional: true
       data.devicePhotovoltaicPanel[].voltage:
         type: number
+        range: [0, 100]
         unit: V
         optional: true
       data.devicePhotovoltaicPanel[].freq:
         type: number
+        range: [0, 70]
         unit: Hz
         optional: true
       data.devicePhotovoltaicPanel[].temp:
         type: number
+        range: [-40, 120]
         unit: °C
         optional: true

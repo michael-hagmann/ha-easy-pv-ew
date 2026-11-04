@@ -34,7 +34,20 @@ async def async_setup_entry(
     )
 
 
-class DeviceOnlineSensor(EasyPVDeviceEntity, BinarySensorEntity):  # type: ignore[misc]
+class _StatusSensor(EasyPVDeviceEntity, BinarySensorEntity):  # type: ignore[misc]
+    """Base for sensors derived from the status: unavailable without status."""
+
+    @property
+    def available(self) -> bool:  # type: ignore[override]
+        """Return False if the cloud sent no valid status."""
+        return (
+            super().available
+            and self._data is not None
+            and self._data.status is not None
+        )
+
+
+class DeviceOnlineSensor(_StatusSensor):
     """On while the cloud reports the inverter online (status 1)."""
 
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
@@ -58,7 +71,7 @@ class DeviceOnlineSensor(EasyPVDeviceEntity, BinarySensorEntity):  # type: ignor
         return self._data.status == STATUS_ONLINE
 
 
-class DeviceFaultSensor(EasyPVDeviceEntity, BinarySensorEntity):  # type: ignore[misc]
+class DeviceFaultSensor(_StatusSensor):
     """On while the cloud reports a fault of the inverter (status 3)."""
 
     _attr_device_class = BinarySensorDeviceClass.PROBLEM

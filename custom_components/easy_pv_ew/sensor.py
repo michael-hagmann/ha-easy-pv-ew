@@ -248,6 +248,17 @@ class EasyPVSensorMixin:
         data = self._data  # type: ignore[attr-defined]
         return self.entity_description.value_fn(data) if data else None
 
+    @property
+    def available(self) -> bool:
+        """
+        Return False without a value.
+
+        A missing or invalid value from the cloud (see easy_pv.validate) makes
+        the sensor unavailable instead of showing a wrong or unknown value.
+        The lifetime energy keeps its last value and stays available.
+        """
+        return super().available and self.native_value is not None  # type: ignore[misc]
+
 
 class EasyPVStationSensor(  # type: ignore[misc]
     EasyPVSensorMixin, EasyPVStationEntity, SensorEntity
