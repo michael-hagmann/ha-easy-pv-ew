@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
 import pytest
@@ -55,13 +55,21 @@ async def test_diagnostics_anonymized(
     hass: HomeAssistant, setup_integration: MockConfigEntry
 ) -> None:
     """Diagnostics contain the raw responses without identifying values."""
+    # Microseconds in the timestamp can contain a placeholder such as "1001";
+    # pin it so the leak check below is deterministic.
+    setup_integration.runtime_data._last_success = datetime(  # noqa: SLF001
+        2026, 11, 4, 12, 0, 0, 100123, tzinfo=UTC
+    )
     diagnostics = await async_get_config_entry_diagnostics(hass, setup_integration)
-    dump = json.dumps(diagnostics, ensure_ascii=False)
 
     raw = diagnostics["raw_data"]
     assert raw["stations"][0]["powerTotals"] == 123.45
     assert raw["device_data"][0]["genpowerMonthTotals"] == 8500
     assert diagnostics["coordinator"]["last_update_success"] is True
+    assert diagnostics["coordinator"]["last_success"].endswith(".100123+00:00")
+
+    diagnostics["coordinator"].pop("last_success")
+    dump = json.dumps(diagnostics, ensure_ascii=False)
     for secret in (
         "1001",
         "2001",

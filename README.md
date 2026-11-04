@@ -67,7 +67,7 @@ custom_components/easy_pv_ew/const.py
 
 ## Development
 
-The devcontainer (`.devcontainer/devcontainer.json`) bind-mounts a host folder to `/workspaces/austausch`. Docker runs in WSL2, so the source is a WSL path: `/mnt/c/Users/<Windows user>/Projekte/ha-austausch`, with the user name taken from `${localEnv:USERNAME}`. The folder must exist on the host, otherwise the container does not start; create it or adjust/remove the mount before opening the container.
+The devcontainer (`.devcontainer/devcontainer.json`) bind-mounts a host folder to `/workspaces/austausch`. The source is taken from the host environment variable `HA_AUSTAUSCH` (`${localEnv:HA_AUSTAUSCH}`), which must be set on the machine running VS Code before VS Code starts. The folder must exist on the host, otherwise the container does not start; set the variable and create the folder, or adjust/remove the mount before opening the container.
 
 ## Contributions are welcome!
 

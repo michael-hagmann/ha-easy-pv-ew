@@ -4,7 +4,7 @@
   "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude && scripts/setup",
   "mounts": [
     "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
-    "source=/mnt/c/Users/${localEnv:USERNAME}/Projekte/ha-austausch,target=/workspaces/austausch,type=bind"
+    "source=${localEnv:HA_AUSTAUSCH},target=/workspaces/austausch,type=bind"
   ],
   "forwardPorts": [
     8123
