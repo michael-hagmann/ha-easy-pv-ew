@@ -7,13 +7,10 @@ managing entities and devices in the Easy PV integration.
 
 from collections.abc import Callable, Iterable
 
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import EasyPVConfigEntry
-from .const import DOMAIN
 from .coordinator import EasyPVCoordinator
 
 type CreateStationEntitiesCallback = Callable[
@@ -28,7 +25,6 @@ type CreatePanelEntitiesCallback = Callable[
 
 
 async def setup_platform_entry(
-    hass: HomeAssistant,
     config_entry: EasyPVConfigEntry,
     async_add_entities: AddEntitiesCallback,
     create_station_entities: CreateStationEntitiesCallback = lambda _, __: [],
@@ -38,52 +34,45 @@ async def setup_platform_entry(
     """Add sensors for passed config_entry in HA."""
     coordinator = config_entry.runtime_data
 
+    # Devices seen since setup. A device or PV input missing from one response
+    # (e.g. no inputs while the inverter is offline at night) is not removed:
+    # its entities become unavailable and come back with the next data. That
+    # keeps entity IDs and settings stable. Devices that are really gone can be
+    # deleted by hand (async_remove_config_entry_device).
     known_devices: set[str] = set()
 
     def _check_device() -> None:
-        current_devices = coordinator.enumerate_devices()
-        new_devices = current_devices - known_devices
-        stale_devices = known_devices - current_devices
-        known_devices.clear()
-        known_devices.update(current_devices)
+        if coordinator.data is None:
+            return
+        new_devices = coordinator.enumerate_devices() - known_devices
+        if not new_devices:
+            return
+        known_devices.update(new_devices)
 
-        if new_devices:
-            new_entities: list[Entity] = []
-            for station in coordinator.data.values():
-                if station.entity_id in new_devices:
+        new_entities: list[Entity] = []
+        for station in coordinator.data.values():
+            if station.entity_id in new_devices:
+                new_entities.extend(
+                    create_station_entities(coordinator, station.entity_id)
+                )
+
+            for device in station.devices.values():
+                if device.entity_id in new_devices:
                     new_entities.extend(
-                        create_station_entities(coordinator, station.entity_id)
+                        create_device_entities(
+                            coordinator, station.entity_id, device.id
+                        )
                     )
 
-                for device in station.devices.values():
-                    if device.entity_id in new_devices:
+                for panel in device.panels or []:
+                    if panel.entity_id in new_devices:
                         new_entities.extend(
-                            create_device_entities(
-                                coordinator, station.entity_id, device.id
+                            create_panel_entities(
+                                coordinator, station.entity_id, device.id, panel.idx
                             )
                         )
 
-                    for panel in device.panels or []:
-                        if panel.entity_id in new_devices:
-                            new_entities.extend(
-                                create_panel_entities(
-                                    coordinator, station.entity_id, device.id, panel.idx
-                                )
-                            )
-
-            async_add_entities(new_entities)
-
-        if stale_devices:
-            device_registry = dr.async_get(hass)
-            for device_id in stale_devices:
-                device = device_registry.async_get_device(
-                    identifiers={(DOMAIN, device_id)}
-                )
-                if device:
-                    device_registry.async_update_device(
-                        device_id=device.id,
-                        remove_config_entry_id=config_entry.entry_id,
-                    )
+        async_add_entities(new_entities)
 
     _check_device()
     config_entry.async_on_unload(coordinator.async_add_listener(_check_device))

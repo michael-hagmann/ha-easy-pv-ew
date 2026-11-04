@@ -52,11 +52,19 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     except BaseError as err:
         raise CannotConnect from err
 
-    # Return info that you want to store in the config entry.
+    # Accounts registered with a phone number may have no email address, and
+    # the field names are not documented; fall back to the login name.
+    email = user_info.get("email") or None
+    title = (
+        user_info.get("userName")
+        or user_info.get("nickName")
+        or email
+        or data[CONF_USERNAME]
+    )
     return {
-        "title": user_info["userName"],
+        "title": str(title),
         "token": hub.token,
-        "email": user_info["email"],
+        "email": email,
     }
 
 

@@ -23,9 +23,9 @@ class PVPanel(PVEntity):
     idx: int
     station_id: str
     device_id: str
-    power: float
-    current: float
-    voltage: float
+    power: float | None
+    current: float | None
+    voltage: float | None
     energy_total: float | None  # kWh
     temperature: float | None
     frequency: float | None
@@ -37,16 +37,16 @@ class PVDevice(PVEntity):
 
     id: str
     station_id: str
-    power: float
+    power: float | None
     energy_month: float | None  # kWh
     energy_today: float | None  # kWh
     energy_total: float | None  # kWh
     status: int | None
     product_code: str
-    device_serial: str
-    grid_voltage: float
-    app_fw: str
-    net_fw: str
+    device_serial: str | None
+    grid_voltage: float | None
+    app_fw: str | None
+    net_fw: str | None
 
     panels: list[PVPanel]
 
@@ -66,9 +66,9 @@ class PVStation(PVEntity):
     location: str
     latitude: float | None
     longitude: float | None
-    power: float
-    energy_total: float
-    energy_today: float
+    power: float | None
+    energy_total: float | None
+    energy_today: float | None
     status: int | None
 
     devices: dict[str, PVDevice]

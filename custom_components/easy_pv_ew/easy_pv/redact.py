@@ -8,7 +8,7 @@ REDACTED = "**REDACTED**"
 # Words in field names that point to identifying data. Field names are split
 # into words (camelCase, snake_case), so "deviceNum" -> {"device", "num"} and
 # "plantLocation" -> {"plant", "location"}. Unknown fields are therefore
-# covered as long as their name contains one of these words.
+# covered as long as their name contains one of these words, also in plural.
 SENSITIVE_WORDS = frozenset(
     {
         "account",
@@ -17,7 +17,10 @@ SENSITIVE_WORDS = frozenset(
         "avatar",
         "city",
         "country",
+        "county",
+        "district",
         "email",
+        "gps",
         "iccid",
         "id",
         "imei",
@@ -39,7 +42,12 @@ SENSITIVE_WORDS = frozenset(
         "number",
         "password",
         "phone",
+        "post",
+        "postal",
+        "postcode",
+        "province",
         "pwd",
+        "region",
         "secret",
         "serial",
         "sn",
@@ -47,6 +55,7 @@ SENSITIVE_WORDS = frozenset(
         "street",
         "tel",
         "token",
+        "town",
         "user",
         "username",
         "wifi",
@@ -58,7 +67,15 @@ _WORD = re.compile(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+")
 
 
 def _words(key: str) -> set[str]:
-    return {word.lower() for word in _WORD.findall(key)}
+    """Split a field name into lower-case words, plurals also as singular."""
+    words = {word.lower() for word in _WORD.findall(key)}
+    # "deviceIds" -> "ids" -> also "id"; "addresses" -> also "address".
+    for word in list(words):
+        if word.endswith("es"):
+            words.add(word[:-2])
+        if word.endswith("s"):
+            words.add(word[:-1])
+    return words
 
 
 def is_sensitive(key: str) -> bool:

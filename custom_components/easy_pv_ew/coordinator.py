@@ -22,7 +22,7 @@ from .const import (
     DOMAIN,
     STALE_DATA_GRACE,
 )
-from .easy_pv import BaseError, EasyPVClient, LoginError
+from .easy_pv import BaseError, EasyPVClient, InvalidResponseError, LoginError
 from .model import PVDevice, PVPanel, PVStation
 
 LOGGER = logging.getLogger(__name__)
@@ -68,71 +68,38 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
         data = await self._client.get_device_data(station_id, device_id)
         # Lists, not dicts keyed by ID: redact() works on field names only.
         self._raw_pending.setdefault("device_data", []).append(data)
-
-        return PVDevice(
-            entity_id=f"{station_id}_{device_id}",
-            entity_name=data["productCode"],
-            id=device_id,
-            station_id=station_id,
-            power=data["genPower"],
-            energy_month=_wh_to_kwh(data.get("genpowerMonthTotals")),
-            energy_today=_wh_to_kwh(data.get("genpowerTodayTotals")),
-            energy_total=_wh_to_kwh(data.get("genPowerTotal")),
-            status=_status(data.get("status")),
-            product_code=data["productCode"],
-            device_serial=data["deviceNum"],
-            grid_voltage=data["gridVoltage"],
-            app_fw=data["appFirmVer"],
-            net_fw=data["netFirmVer"],
-            panels=[
-                PVPanel(
-                    entity_id=f"{station_id}_{device_id}_panel_{panel_data['sort']}",
-                    entity_name=f"{data['productCode']} Panel {panel_data['sort']}",
-                    idx=int(panel_data["sort"]) - 1,
-                    station_id=station_id,
-                    device_id=device_id,
-                    power=panel_data["genPower"],
-                    current=panel_data["current"],
-                    voltage=panel_data["voltage"],
-                    energy_total=_wh_to_kwh(panel_data.get("genpowerTotals")),
-                    temperature=_number(panel_data.get("temp")),
-                    frequency=_number(panel_data.get("freq")),
-                )
-                for panel_data in data.get("devicePhotovoltaicPanel", [])
-            ],
-        )
+        try:
+            return _parse_device(station_id, device_id, data)
+        except (KeyError, TypeError, ValueError, AttributeError) as err:
+            raise InvalidResponseError from err
 
     async def _fetch_devices(self, station_id: str) -> list[PVDevice]:
         """Fetch the list of devices for a given station."""
         data = await self._client.get_station_devices(station_id)
         self._raw_pending.setdefault("station_devices", []).append(data)
-        return [await self.fetch_device(station_id, device["id"]) for device in data]
+        try:
+            device_ids = [str(device["id"]) for device in data]
+        except (KeyError, TypeError) as err:
+            raise InvalidResponseError from err
+        return [
+            await self.fetch_device(station_id, device_id) for device_id in device_ids
+        ]
 
     async def _fetch_stations(self) -> list[PVStation]:
         """Fetch the list of PV stations from the API."""
         data = await self._client.get_stations()
         self._raw_pending["stations"] = data
-        return [
-            PVStation(
-                entity_id=station["id"],
-                entity_name=station["name"],
-                id=station["id"],
-                name=station["name"],
-                address=station["address"],
-                location=station["plantLocation"],
-                latitude=_number(station.get("latitude")),
-                longitude=_number(station.get("longitude")),
-                power=station["genPower"],
-                energy_today=station["todayPowerTotals"],
-                energy_total=station["powerTotals"],
-                status=_status(station.get("status")),
-                devices={
-                    device.id: device
-                    for device in await self._fetch_devices(station["id"])
-                },
-            )
-            for station in data
-        ]
+        stations = []
+        for station in data:
+            try:
+                parsed = _parse_station(station)
+            except (KeyError, TypeError, ValueError, AttributeError) as err:
+                raise InvalidResponseError from err
+            parsed.devices = {
+                device.id: device for device in await self._fetch_devices(parsed.id)
+            }
+            stations.append(parsed)
+        return stations
 
     async def _async_setup(self) -> None:
         try:
@@ -203,10 +170,11 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
     ) -> PVPanel | None:
         """Get a specific panel by its index."""
         device = self.get_device(station_id, device_id)
-        return (
-            device.panels[panel_number]
-            if device and len(device.panels) > panel_number
-            else None
+        if device is None:
+            return None
+        # Look up by input number, not list position: the order is not fixed.
+        return next(
+            (panel for panel in device.panels if panel.idx == panel_number), None
         )
 
 
@@ -222,6 +190,82 @@ def _cannot_connect(err: Exception) -> UpdateFailed:
         translation_key="cannot_connect",
         translation_placeholders={"error": str(err) or type(err).__name__},
     )
+
+
+def _parse_station(station: dict[str, Any]) -> PVStation:
+    """Build a station from getStationList; devices are added by the caller."""
+    station_id = str(station["id"])
+    name = str(station.get("name") or station_id)
+    return PVStation(
+        entity_id=station_id,
+        entity_name=name,
+        id=station_id,
+        name=name,
+        address=station.get("address") or "",
+        location=station.get("plantLocation") or "",
+        latitude=_number(station.get("latitude")),
+        longitude=_number(station.get("longitude")),
+        power=_number(station.get("genPower")),
+        energy_today=_number(station.get("todayPowerTotals")),
+        energy_total=_number(station.get("powerTotals")),
+        status=_status(station.get("status")),
+        devices={},
+    )
+
+
+def _parse_device(station_id: str, device_id: str, data: dict[str, Any]) -> PVDevice:
+    """
+    Build a device from getDeviceDataInfo.
+
+    Only the IDs and the input numbers are required. Missing measurements
+    (e.g. while the inverter is offline at night) become None.
+    """
+    product_code = str(data.get("productCode") or "Inverter")
+    return PVDevice(
+        entity_id=f"{station_id}_{device_id}",
+        entity_name=product_code,
+        id=device_id,
+        station_id=station_id,
+        power=_number(data.get("genPower")),
+        energy_month=_wh_to_kwh(data.get("genpowerMonthTotals")),
+        energy_today=_wh_to_kwh(data.get("genpowerTodayTotals")),
+        energy_total=_wh_to_kwh(data.get("genPowerTotal")),
+        status=_status(data.get("status")),
+        product_code=product_code,
+        device_serial=_text(data.get("deviceNum")),
+        grid_voltage=_number(data.get("gridVoltage")),
+        app_fw=_text(data.get("appFirmVer")),
+        net_fw=_text(data.get("netFirmVer")),
+        panels=[
+            _parse_panel(station_id, device_id, product_code, panel_data)
+            for panel_data in data.get("devicePhotovoltaicPanel") or []
+        ],
+    )
+
+
+def _parse_panel(
+    station_id: str, device_id: str, product_code: str, panel_data: dict[str, Any]
+) -> PVPanel:
+    """Build one PV input of a device."""
+    sort = int(panel_data["sort"])
+    return PVPanel(
+        entity_id=f"{station_id}_{device_id}_panel_{sort}",
+        entity_name=f"{product_code} Panel {sort}",
+        idx=sort - 1,
+        station_id=station_id,
+        device_id=device_id,
+        power=_number(panel_data.get("genPower")),
+        current=_number(panel_data.get("current")),
+        voltage=_number(panel_data.get("voltage")),
+        energy_total=_wh_to_kwh(panel_data.get("genpowerTotals")),
+        temperature=_number(panel_data.get("temp")),
+        frequency=_number(panel_data.get("freq")),
+    )
+
+
+def _text(value: Any) -> str | None:
+    """Return value as string, or None if missing."""
+    return None if value in (None, "") else str(value)
 
 
 def _number(value: Any) -> float | None:

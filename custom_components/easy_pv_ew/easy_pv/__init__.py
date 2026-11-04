@@ -4,7 +4,7 @@ import logging
 from datetime import UTC, datetime
 from typing import Any
 
-from aiohttp import ClientError, ClientSession
+from aiohttp import ClientError, ClientResponseError, ClientSession, ContentTypeError
 
 from .redact import redact
 
@@ -116,8 +116,11 @@ class EasyPVClient:
                 if response.status != HTTP_OK:
                     raise InvalidResponseError
                 data = await response.json()
+        except (ContentTypeError, ValueError) as err:
+            # Not JSON (maintenance page, captive portal) or broken JSON.
+            raise InvalidResponseError from err
         except (ClientError, TimeoutError) as err:
-            raise CommunicationError(repr(err)) from err
+            raise CommunicationError(_describe(err)) from err
 
         if not isinstance(data, dict) or "code" not in data:
             raise InvalidResponseError
@@ -158,12 +161,18 @@ class EasyPVClient:
         self._token = None
 
     async def get_user_info(self) -> Any:
-        """Get the user information if logged in."""
+        """
+        Get the user information if logged in.
+
+        A rejected token (401) raises LoginError in _request; any other error
+        code is a server problem and raises ApiError, so that Home Assistant
+        retries instead of asking for the credentials again.
+        """
         data = await self._request("GET", "/api/user/v2/selectUserInfo")
-        if data["code"] == HTTP_OK and data.get("data"):
+        if data["code"] == HTTP_OK and isinstance(data.get("data"), dict):
             return data["data"]
 
-        raise LoginError(data["code"], data.get("msg", ""))
+        raise ApiError("Failed to get user info", data["code"], data.get("msg", ""))
 
     async def get_stations(self) -> list[Any]:
         """Get the list of stations."""
@@ -173,8 +182,12 @@ class EasyPVClient:
             params={"pageNum": "1", "pageSize": "1000"},
             log_response=True,
         )
-        if data["code"] == HTTP_OK and (data.get("data") or {}).get("rows"):
-            return data["data"]["rows"]
+        if data["code"] == HTTP_OK and isinstance(data.get("data"), dict):
+            rows = data["data"].get("rows")
+            if rows is None:
+                return []
+            if isinstance(rows, list):
+                return rows
 
         raise ApiError("Failed to get stations", data["code"], data.get("msg", ""))
 
@@ -186,7 +199,8 @@ class EasyPVClient:
             params={"powerId": station_id},
             log_response=True,
         )
-        if data["code"] == HTTP_OK and data.get("data"):
+        if data["code"] == HTTP_OK and isinstance(data.get("data"), list):
+            # An empty list is valid: a station without devices.
             return data["data"]
 
         raise ApiError("Failed to get devices", data["code"], data.get("msg", ""))
@@ -205,7 +219,19 @@ class EasyPVClient:
             params={"deviceId": device_id, "stationId": station_id, "date": date},
             log_response=True,
         )
-        if data["code"] == HTTP_OK and data.get("data"):
+        if data["code"] == HTTP_OK and isinstance(data.get("data"), dict):
             return data["data"]
 
         raise ApiError("Failed to get device data", data["code"], data.get("msg", ""))
+
+
+def _describe(err: Exception) -> str:
+    """
+    Describe a network error without request details.
+
+    The repr and str of ClientResponseError contain the request info with all
+    headers (including the token) or the URL with station and device IDs.
+    """
+    if isinstance(err, ClientResponseError):
+        return f"{type(err).__name__} (HTTP {err.status})"
+    return str(err) or type(err).__name__

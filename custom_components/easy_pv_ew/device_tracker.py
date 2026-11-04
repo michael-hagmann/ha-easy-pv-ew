@@ -20,13 +20,12 @@ PARALLEL_UPDATES = 0
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,
+    _hass: HomeAssistant,
     config_entry: EasyPVConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Add device_trackers for passed config_entry in HA."""
     await setup_platform_entry(
-        hass=hass,
         config_entry=config_entry,
         async_add_entities=async_add_entities,
         create_station_entities=lambda coordinator, station_id: [
