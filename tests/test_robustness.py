@@ -150,3 +150,21 @@ async def test_total_restored_after_restart(
 
     assert sensor_entity_id(hass, TOTAL) == "sensor.gartenhaus_energy_total"
     assert sensor_state(hass, TOTAL).state == "200.0"
+
+
+@pytest.mark.usefixtures("setup_integration")
+async def test_unavailable_reason_is_translated(
+    hass: HomeAssistant,
+    aioclient_mock: AiohttpClientMocker,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """After a long outage the coordinator reports a translatable error."""
+    _cloud_down(aioclient_mock)
+    for _ in range(5):
+        await _poll(hass, freezer)
+
+    coordinator = hass.config_entries.async_entries(DOMAIN)[0].runtime_data
+    err = coordinator.last_exception
+    assert err.translation_domain == DOMAIN
+    assert err.translation_key == "cannot_connect"
+    assert "DNS failure" in err.translation_placeholders["error"]

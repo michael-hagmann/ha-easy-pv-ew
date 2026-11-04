@@ -1,20 +1,16 @@
 {
     "config": {
-        "abort": {
-            "already_configured": "Dieses Konto ist bereits verbunden",
-            "reauth_successful": "Erneute Authentifizierung erfolgreich",
-            "wrong_account": "Die Zugangsdaten gehören zu einem anderen Easy-PV-Konto als {account}."
-        },
-        "error": {
-            "cannot_connect": "Verbindung fehlgeschlagen",
-            "invalid_auth": "Ungültige Authentifizierung",
-            "unknown": "Unerwarteter Fehler"
-        },
         "step": {
             "user": {
+                "title": "Easy-PV-Konto verbinden",
+                "description": "Mit dem Konto der Easy-PV-App anmelden. Gespeichert wird nur ein Anmelde-Token, nicht das Passwort.",
                 "data": {
-                    "password": "Passwort",
-                    "username": "Benutzername"
+                    "username": "Benutzername",
+                    "password": "Passwort"
+                },
+                "data_description": {
+                    "username": "Telefonnummer oder E-Mail-Adresse, mit der du dich in der Easy-PV-App anmeldest.",
+                    "password": "Passwort der Easy-PV-App."
                 }
             },
             "reauth_confirm": {
@@ -23,17 +19,33 @@
                 "data": {
                     "username": "Benutzername",
                     "password": "Passwort"
+                },
+                "data_description": {
+                    "username": "Telefonnummer oder E-Mail-Adresse, mit der du dich in der Easy-PV-App anmeldest.",
+                    "password": "Passwort der Easy-PV-App."
                 }
             }
+        },
+        "error": {
+            "cannot_connect": "Verbindung zur Easy-PV-Cloud fehlgeschlagen",
+            "invalid_auth": "Benutzername oder Passwort ungültig",
+            "unknown": "Unerwarteter Fehler"
+        },
+        "abort": {
+            "already_configured": "Dieses Konto ist bereits verbunden",
+            "reauth_successful": "Erneute Authentifizierung erfolgreich",
+            "wrong_account": "Die Zugangsdaten gehören zu einem anderen Easy-PV-Konto als {account}."
+        }
+    },
+    "device": {
+        "panel": {
+            "name": "{connected_inverter} PV-Eingang {panel_number}"
         }
     },
     "entity": {
         "sensor": {
-            "energy_total": {
-                "name": "Erzeugte Energie"
-            },
-            "energy_today": {
-                "name": "Heute erzeugte Energie"
+            "power": {
+                "name": "Leistung"
             },
             "voltage": {
                 "name": "Spannung"
@@ -41,8 +53,14 @@
             "current": {
                 "name": "Strom"
             },
+            "energy_today": {
+                "name": "Ertrag heute"
+            },
             "energy_month": {
-                "name": "Diesen Monat erzeugte Energie"
+                "name": "Ertrag Monat"
+            },
+            "energy_total": {
+                "name": "Gesamtertrag"
             },
             "grid_voltage": {
                 "name": "Netzspannung"
@@ -54,9 +72,12 @@
             }
         }
     },
-    "device": {
-        "panel": {
-            "name": "{connected_inverter} Paneel {panel_number}"
+    "exceptions": {
+        "cannot_connect": {
+            "message": "Easy-PV-Cloud nicht erreichbar: {error}"
+        },
+        "auth_failed": {
+            "message": "Die Anmeldung bei Easy PV ist abgelaufen, bitte erneut authentifizieren."
         }
     }
 }

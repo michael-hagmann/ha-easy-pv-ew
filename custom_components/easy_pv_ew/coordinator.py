@@ -14,7 +14,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 from homeassistant.util import dt as dt_util
 
-from .const import STALE_DATA_GRACE
+from .const import DOMAIN, STALE_DATA_GRACE
 from .easy_pv import BaseError, EasyPVClient, LoginError
 from .model import PVDevice, PVPanel, PVStation
 
@@ -111,9 +111,9 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
             await self._client.login_with_token(self._config_entry.data["token"])
 
         except LoginError as err:
-            raise ConfigEntryAuthFailed from err
-        except BaseError as err:
-            raise UpdateFailed("Error communicating with API") from err
+            raise _auth_failed() from err
+        except (BaseError, TimeoutError) as err:
+            raise _cannot_connect(err) from err
 
     async def _async_update_data(self) -> dict[str, PVStation]:
         """Fetch data from API endpoint."""
@@ -122,14 +122,14 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
                 data = {station.id: station for station in await self._fetch_stations()}
 
         except LoginError as err:
-            raise ConfigEntryAuthFailed from err
+            raise _auth_failed() from err
         except (BaseError, TimeoutError) as err:
             if self._within_grace():
                 # Short outage: keep the last valid values instead of making
                 # every entity unavailable.
                 LOGGER.debug("Update failed, keeping last values: %s", err)
                 return self.data
-            raise UpdateFailed(f"Error communicating with API: {err}") from err
+            raise _cannot_connect(err) from err
 
         self._last_success = dt_util.utcnow()
         return data
@@ -173,3 +173,17 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
             if device and len(device.panels) > panel_number
             else None
         )
+
+
+def _auth_failed() -> ConfigEntryAuthFailed:
+    return ConfigEntryAuthFailed(
+        translation_domain=DOMAIN, translation_key="auth_failed"
+    )
+
+
+def _cannot_connect(err: Exception) -> UpdateFailed:
+    return UpdateFailed(
+        translation_domain=DOMAIN,
+        translation_key="cannot_connect",
+        translation_placeholders={"error": str(err) or type(err).__name__},
+    )

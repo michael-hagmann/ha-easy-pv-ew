@@ -15,6 +15,9 @@ from .utils import setup_platform_entry
 
 LOGGER = logging.getLogger(__name__)
 
+# All entities read from the coordinator, which does the polling.
+PARALLEL_UPDATES = 0
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
