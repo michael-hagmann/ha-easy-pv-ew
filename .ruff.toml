@@ -17,6 +17,7 @@ ignore = [
     "EM101",
     "EM102",
     "CPY001", # no per-file copyright headers; LICENSE applies
+    "PLR0913", # too many arguments; keyword-only options are fine (also ignored by HA core)
     "PLR0917", # too many positional arguments (also ignored by HA core)
     "TC001", # type-checking import blocks (also ignored by HA core)
     "TC002",

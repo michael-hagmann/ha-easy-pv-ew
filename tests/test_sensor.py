@@ -42,7 +42,7 @@ PANEL_1 = "1001_2001_panel_1"
     ],
 )
 @pytest.mark.usefixtures("setup_integration")
-async def test_sensor_states(  # noqa: PLR0913
+async def test_sensor_states(
     hass: HomeAssistant,
     unique_id: str,
     value: str,

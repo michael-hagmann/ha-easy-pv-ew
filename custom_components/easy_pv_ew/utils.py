@@ -27,7 +27,7 @@ type CreatePanelEntitiesCallback = Callable[
 ]
 
 
-async def setup_platform_entry(  # noqa: PLR0913
+async def setup_platform_entry(
     hass: HomeAssistant,
     config_entry: EasyPVConfigEntry,
     async_add_entities: AddEntitiesCallback,

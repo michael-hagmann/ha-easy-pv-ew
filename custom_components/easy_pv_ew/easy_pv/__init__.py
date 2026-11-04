@@ -6,6 +6,8 @@ from typing import Any
 
 from aiohttp import ClientError, ClientSession
 
+from .redact import redact
+
 LOG = logging.getLogger(__name__)
 BASE_URL = "https://inverter-en.easycharging-tech.com/prod-api"
 HEADERS = {
@@ -17,6 +19,7 @@ HEADERS = {
 }
 
 HTTP_OK = 200
+HTTP_UNAUTHORIZED = 401
 
 
 class BaseError(Exception):
@@ -87,8 +90,15 @@ class EasyPVClient:
         params: dict[str, str] | None = None,
         json: dict[str, Any] | None = None,
         auth: bool = True,
+        log_response: bool = False,
     ) -> dict[str, Any]:
-        """Send a request and return the decoded JSON body."""
+        """
+        Send a request and return the decoded JSON body.
+
+        Raises LoginError if the token is rejected (HTTP 401 or code 401 in
+        the body). With log_response the anonymized body is logged on debug
+        level; never set it for login or user info responses.
+        """
         headers = dict(HEADERS)
         if auth:
             headers["Authorization"] = f"Bearer {self._token}"
@@ -101,6 +111,8 @@ class EasyPVClient:
                 json=json,
                 headers=headers,
             ) as response:
+                if auth and response.status == HTTP_UNAUTHORIZED:
+                    raise LoginError(HTTP_UNAUTHORIZED, "token rejected")
                 if response.status != HTTP_OK:
                     raise InvalidResponseError
                 data = await response.json()
@@ -109,6 +121,12 @@ class EasyPVClient:
 
         if not isinstance(data, dict) or "code" not in data:
             raise InvalidResponseError
+
+        if log_response and LOG.isEnabledFor(logging.DEBUG):
+            LOG.debug("Response %s %s: %s", method, path, redact(data))
+
+        if auth and data["code"] == HTTP_UNAUTHORIZED:
+            raise LoginError(data["code"], data.get("msg", ""))
 
         return data
 
@@ -153,6 +171,7 @@ class EasyPVClient:
             "GET",
             "/api/powerStation/v3/getStationList",
             params={"pageNum": "1", "pageSize": "1000"},
+            log_response=True,
         )
         if data["code"] == HTTP_OK and (data.get("data") or {}).get("rows"):
             return data["data"]["rows"]
@@ -165,6 +184,7 @@ class EasyPVClient:
             "GET",
             "/api/powerStation/v2/getPowerList",
             params={"powerId": station_id},
+            log_response=True,
         )
         if data["code"] == HTTP_OK and data.get("data"):
             return data["data"]
@@ -183,6 +203,7 @@ class EasyPVClient:
             "GET",
             "/api/powerStation/v3/getDeviceDataInfo",
             params={"deviceId": device_id, "stationId": station_id, "date": date},
+            log_response=True,
         )
         if data["code"] == HTTP_OK and data.get("data"):
             return data["data"]

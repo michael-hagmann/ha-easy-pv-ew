@@ -14,6 +14,8 @@ scripts/lint    # formatiert und korrigiert; danach muss "All checks passed!" ko
 scripts/test
 ```
 
+Die Ausgabe **nicht** durch eine Pipe schicken (`scripts/lint | tail`) und nicht mit `&&` an `git commit` hängen: Die Pipe übernimmt den Exit-Code von `tail`, ein Lint-Fehler fällt dann nicht auf. Ist die Ausgabe zu lang, mit `set -o pipefail` arbeiten.
+
 Schlägt etwas fehl: beheben, nicht committen. Hat `scripts/lint` Dateien umformatiert, die Änderungen mit in den Commit nehmen.
 
 ## 2. Diff auf vertrauliche Daten prüfen

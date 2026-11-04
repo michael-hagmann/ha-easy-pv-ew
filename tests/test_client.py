@@ -133,3 +133,23 @@ async def test_shared_session(
 
     assert not session.closed
     assert client._session is session  # noqa: SLF001
+
+
+async def test_expired_token_body_code(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    """Code 401 in the body of a data request raises LoginError (for reauth)."""
+    aioclient_mock.get(URL_STATIONS, json=load_fixture("error_token.json"))
+
+    with pytest.raises(LoginError):
+        await _client(hass).get_stations()
+
+
+async def test_expired_token_http_status(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker
+) -> None:
+    """HTTP 401 raises LoginError (for reauth)."""
+    aioclient_mock.get(URL_DEVICE_DATA, status=401)
+
+    with pytest.raises(LoginError):
+        await _client(hass).get_device_data("1001", "2001")
