@@ -1,7 +1,10 @@
 {
   "name": "Easy PV (EW) dev",
   "image": "mcr.microsoft.com/devcontainers/python:3.14",
-  "postCreateCommand": "scripts/setup",
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude && scripts/setup",
+  "mounts": [
+    "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume"
+  ],
   "forwardPorts": [
     8123
   ],
