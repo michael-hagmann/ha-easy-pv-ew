@@ -64,7 +64,7 @@ Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcon
 - Der API-Client bekommt die Session von `async_get_clientsession(hass)` und legt nie eine eigene an.
 - Fehlertypen des Clients: `LoginError` (Anmeldung/Token) → im Coordinator `ConfigEntryAuthFailed`; alle anderen `BaseError` (`ApiError`, `InvalidResponseError`, `CommunicationError` für Netzwerk/DNS/Timeout) → `UpdateFailed`. `LoginError` nie unterwegs abfangen oder in `UpdateFailed` umwandeln, sonst startet kein Reauth.
 - Nie Tokens, E-Mail, Seriennummern, IDs oder Standort loggen, auch nicht auf Debug. Der Debug-Logger der Integration ist in der Test-Instanz aktiv. Rohantworten nur anonymisiert loggen.
-- Tests: Fixtures in `tests/fixtures/` (nachgebaut bzw. anonymisiert, feste Platzhalter wie `test-token`, Station `1001`, Gerät `2001`). HTTP über `aioclient_mock`; die Fixture `mock_api` in `tests/conftest.py` registriert alle Endpunkte erfolgreich.
+- Tests: Fixtures in `tests/fixtures/` (nachgebaut bzw. anonymisiert, feste Platzhalter wie `test-token`, Station `1001`, Gerät `2001`). Messwerte in Fixtures dürfen keinem Platzhalter gleichen (z. B. Frequenz 49.98 statt 50.0, weil der Breitengrad 50.0 ist), sonst schlagen die Anonymisierungstests fehl. HTTP über `aioclient_mock`; die Fixture `mock_api` in `tests/conftest.py` registriert alle Endpunkte erfolgreich.
 - Für jede Fehlerbehebung aus dem Briefing einen Test, der den Fehler zeigt.
 
 ## Schnittstelle zum Energie-Setup (Kurzfassung)
