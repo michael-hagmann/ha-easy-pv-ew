@@ -7,12 +7,13 @@ from datetime import timedelta
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
 
-from .easy_pv import ApiError, EasyPVClient, LoginError
+from .easy_pv import BaseError, EasyPVClient, LoginError
 from .model import PVDevice, PVPanel, PVStation
 
 LOGGER = logging.getLogger(__name__)
@@ -34,7 +35,7 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
             always_update=True,
         )
         self._config_entry = config_entry
-        self._client = EasyPVClient()
+        self._client = EasyPVClient(async_get_clientsession(hass))
 
     @property
     def is_logged_in(self) -> bool:
@@ -75,42 +76,32 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
 
     async def _fetch_devices(self, station_id: str) -> list[PVDevice]:
         """Fetch the list of devices for a given station."""
-        try:
-            data = await self._client.get_station_devices(station_id)
-            return [
-                await self.fetch_device(station_id, device["id"]) for device in data
-            ]
-        except ApiError as err:
-            raise UpdateFailed(
-                f"Error fetching devices for station {station_id}"
-            ) from err
+        data = await self._client.get_station_devices(station_id)
+        return [await self.fetch_device(station_id, device["id"]) for device in data]
 
     async def _fetch_stations(self) -> list[PVStation]:
         """Fetch the list of PV stations from the API."""
-        try:
-            data = await self._client.get_stations()
-            return [
-                PVStation(
-                    entity_id=station["id"],
-                    entity_name=station["name"],
-                    id=station["id"],
-                    name=station["name"],
-                    address=station["address"],
-                    location=station["plantLocation"],
-                    latitude=station["latitude"],
-                    longitude=station["longitude"],
-                    power=station["genPower"],
-                    energy_today=station["todayPowerTotals"],
-                    energy_total=station["powerTotals"],
-                    devices={
-                        device.id: device
-                        for device in await self._fetch_devices(station["id"])
-                    },
-                )
-                for station in data
-            ]
-        except ApiError as err:
-            raise UpdateFailed("Error fetching stations") from err
+        data = await self._client.get_stations()
+        return [
+            PVStation(
+                entity_id=station["id"],
+                entity_name=station["name"],
+                id=station["id"],
+                name=station["name"],
+                address=station["address"],
+                location=station["plantLocation"],
+                latitude=station["latitude"],
+                longitude=station["longitude"],
+                power=station["genPower"],
+                energy_today=station["todayPowerTotals"],
+                energy_total=station["powerTotals"],
+                devices={
+                    device.id: device
+                    for device in await self._fetch_devices(station["id"])
+                },
+            )
+            for station in data
+        ]
 
     async def _async_setup(self) -> None:
         try:
@@ -118,7 +109,7 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
 
         except LoginError as err:
             raise ConfigEntryAuthFailed from err
-        except ApiError as err:
+        except BaseError as err:
             raise UpdateFailed("Error communicating with API") from err
 
     async def _async_update_data(self) -> dict[str, PVStation]:
@@ -129,8 +120,8 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
 
         except LoginError as err:
             raise ConfigEntryAuthFailed from err
-        except ApiError as err:
-            raise UpdateFailed("Error communicating with API") from err
+        except (BaseError, TimeoutError) as err:
+            raise UpdateFailed(f"Error communicating with API: {err}") from err
 
     def enumerate_devices(self) -> set[str]:
         """Enumerate all devices across all stations."""

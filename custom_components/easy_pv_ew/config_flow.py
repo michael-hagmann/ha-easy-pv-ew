@@ -9,9 +9,10 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import DOMAIN
-from .easy_pv import EasyPVClient, LoginError
+from .easy_pv import BaseError, EasyPVClient, LoginError
 
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigFlowResult
@@ -27,23 +28,21 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 )
 
 
-async def validate_input(_: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
+async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
     """
     Validate the user input allows us to connect.
 
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
-    hub = EasyPVClient()
+    hub = EasyPVClient(async_get_clientsession(hass))
 
     try:
         await hub.login_with_password(data[CONF_USERNAME], data[CONF_PASSWORD])
-
+        user_info = await hub.get_user_info()
     except LoginError as err:
         raise InvalidAuth from err
-    except Exception as err:
+    except BaseError as err:
         raise CannotConnect from err
-
-    user_info = await hub.get_user_info()
 
     # Return info that you want to store in the config entry.
     return {

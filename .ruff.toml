@@ -38,4 +38,6 @@ max-complexity = 25
     "S101", # assert is the normal way to check results in pytest
     "PLR2004", # magic values are fine in test expectations
     "ARG001", # fixtures are often requested only by parameter name
+    "S105", # dummy tokens and passwords in test data are not secrets
+    "S106",
 ]

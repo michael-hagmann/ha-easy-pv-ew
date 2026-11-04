@@ -1,0 +1,18 @@
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "productCode": "VN2T08EU",
+    "deviceNum": "SN0000000000",
+    "genPower": 512.0,
+    "genpowerTodayTotals": 1.25,
+    "genpowerMonthTotals": 8.5,
+    "gridVoltage": 230.4,
+    "appFirmVer": "1.0.0",
+    "netFirmVer": "1.0.0",
+    "devicePhotovoltaicPanel": [
+      {"sort": 1, "genPower": 260.0, "current": 7.1, "voltage": 36.6},
+      {"sort": 2, "genPower": 252.0, "current": 6.9, "voltage": 36.5}
+    ]
+  }
+}
