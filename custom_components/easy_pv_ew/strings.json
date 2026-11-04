@@ -19,7 +19,7 @@
   },
   "device": {
     "panel": {
-      "name": "[%key:component::easy_pv::device::panel_number%]"
+      "name": "[%key:component::easy_pv_ew::device::panel_number%]"
     }
   },
   "entity": {
@@ -34,21 +34,21 @@
         "name": "[%key:component::sensor::entity_component::current::name%]"
       },
       "energy_today": {
-        "name": "[%key:component::easy_pv::entity::sensor::energy_today::name%]"
+        "name": "[%key:component::easy_pv_ew::entity::sensor::energy_today::name%]"
       },
       "energy_total": {
-        "name": "[%key:component::easy_pv::entity::sensor::energy_total::name%]"
+        "name": "[%key:component::easy_pv_ew::entity::sensor::energy_total::name%]"
       },
       "energy_month": {
-        "name": "[%key:component::easy_pv::entity::sensor::energy_month::name%]"
+        "name": "[%key:component::easy_pv_ew::entity::sensor::energy_month::name%]"
       },
       "grid_voltage": {
-        "name": "[%key:component::easy_pv::entity::sensor::grid_voltage::name%]"
+        "name": "[%key:component::easy_pv_ew::entity::sensor::grid_voltage::name%]"
       }
     },
     "device_tracker": {
       "location": {
-        "name": "[%key:component::easy_pv::entity::sensor::location::name%]"
+        "name": "[%key:component::easy_pv_ew::entity::sensor::location::name%]"
       }
     }
   }

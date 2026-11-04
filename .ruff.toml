@@ -16,6 +16,7 @@ ignore = [
     "TRY003",
     "EM101",
     "EM102",
+    "EXE002", # Windows-Dateisysteme (drvfs) melden alle Dateien als ausführbar; Git speichert 100644
 ]
 
 [lint.flake8-pytest-style]

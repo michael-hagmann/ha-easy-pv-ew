@@ -1,0 +1,15 @@
+{
+  "domain": "easy_pv_ew",
+  "name": "Easy PV (EW)",
+  "documentation": "https://github.com/michael-hagmann/ha-easy-pv-ew",
+  "issue_tracker": "https://github.com/michael-hagmann/ha-easy-pv-ew/issues",
+  "dependencies": [],
+  "config_flow": true,
+  "codeowners": [
+    "@michael-hagmann"
+  ],
+  "requirements": [],
+  "iot_class": "cloud_polling",
+  "integration_type": "service",
+  "version": "0.0.1"
+}

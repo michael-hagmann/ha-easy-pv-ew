@@ -1,7 +1,5 @@
 """Entity representations for the Easy PV integration."""
 
-from typing import Generic, TypeVar
-
 from homeassistant.core import callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -10,11 +8,9 @@ from .const import DOMAIN
 from .coordinator import EasyPVCoordinator
 from .model import PVDevice, PVEntity, PVPanel, PVStation
 
-T = TypeVar("T")
 
-
-class EasyPVEntity(CoordinatorEntity[EasyPVCoordinator], Generic[T]):
-    """Base representation of a Hello World Sensor."""
+class EasyPVEntity[T](CoordinatorEntity[EasyPVCoordinator]):
+    """Base representation of an Easy PV entity."""
 
     def __init__(self, coordinator: EasyPVCoordinator) -> None:
         """Initialize the sensor."""

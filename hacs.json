@@ -1,5 +1,5 @@
 {
-  "name": "Easy PV",
+  "name": "Easy PV (EW)",
   "hacs": "1.6.0",
   "domains": [
     "sensor",
