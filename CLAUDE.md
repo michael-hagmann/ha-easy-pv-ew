@@ -28,8 +28,20 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 - Vor jedem schreibenden Schritt außerhalb des Repositorys (z. B. Push, Release, Änderungen an einer HA-Instanz) zeigen, was passiert, und auf Michaels OK warten. Änderungen im Repository dürfen ohne Rückfrage erfolgen; Commits mit aussagekräftiger Nachricht.
 - Zugangsdaten der Easy-PV-App gibt Michael selbst in HA ein. Nie im Chat erfragen, nie in Code, Tests, Fixtures oder Logs ablegen. Rohantworten für Fixtures anonymisieren (Seriennummern, Standort, Konto).
 - `config/` enthält Laufzeitdaten der Test-Instanz und gehört nicht ins Repository, ausgenommen `config/configuration.yaml`.
-- Entwickelt und getestet wird im Devcontainer gegen die dortige Test-Instanz. Die produktive HA-Instanz auf der NAS wird nicht angefasst.
+- Entwickelt und getestet wird im Devcontainer gegen die dortige Test-Instanz (siehe „Umgebung“). Die produktive HA-Instanz auf der NAS wird nicht angefasst.
 - Vor jedem Commit `scripts/lint` und die Tests laufen lassen (Skill `commit`).
+
+## Umgebung: Devcontainer
+
+Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcontainer.json`), nicht auf Michaels Windows-Rechner. Der Host ist Windows mit Docker Desktop (WSL2).
+
+- **Image** `mcr.microsoft.com/devcontainers/python:3.14`, Benutzer `vscode` mit `sudo`. HA 2026.10.4 und die Testabhängigkeiten installiert `scripts/setup` beim Erstellen des Containers (`postCreateCommand`).
+- **Repository** unter `/workspaces/ha-easy-pv-ew` auf einem Container-Volume (ext4), nicht auf einem Windows-Laufwerk.
+- **Kein Zugriff** auf die NAS, das Laufwerk `Z:` oder das Heimnetz, und das ist so gewollt. Ins Internet kommt der Container, die Easy-PV-Cloud ist erreichbar.
+- **Test-Instanz:** HA im Container auf Port 8123, VS Code leitet den Port an den Windows-Rechner weiter.
+- **Git push** läuft über den Credential-Helper von VS Code und funktioniert nur, solange VS Code mit dem Container verbunden ist. `gh` ist nicht installiert.
+- **Rebuild** des Containers (nach Änderungen an `devcontainer.json`) verwirft alles außerhalb von `/workspaces` und den Volumes: installierte Pakete, Shell-Verlauf. `~/.claude` (Login, Memories) liegt auf einem eigenen Volume. Ein Rebuild ist ein Schritt außerhalb des Repositorys und braucht Michaels OK; er löst ihn selbst in VS Code aus.
+- **Temporäre Dateien:** `$TMPDIR` ist leer, und das Scratchpad-Verzeichnis der Session existiert anfangs nicht. Vorher `mkdir -p` und prüfen, bevor man sich auf eine Sicherungskopie verlässt. Um alten Code testweise zu prüfen, lieber `git stash` oder `git worktree` statt Kopieren.
 
 ## Befehle
 
@@ -37,7 +49,6 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 - `scripts/lint`: `ruff format` und `ruff check --fix`
 - `scripts/develop`: Test-Instanz auf Port 8123 starten (Skill `ha-testinstanz`)
 - `scripts/setup`: Abhängigkeiten aus `requirements_test.txt` installieren (läuft beim Erstellen des Containers)
-- Temporäre Dateien: `$TMPDIR` ist im Container leer, und das Scratchpad-Verzeichnis der Session existiert anfangs nicht. Vorher `mkdir -p` und prüfen, bevor man sich auf eine Sicherungskopie verlässt. Um alten Code testweise zu prüfen, lieber `git stash` oder `git worktree` statt Kopieren.
 
 ## Code-Konventionen
 
