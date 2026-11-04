@@ -7,13 +7,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
+from homeassistant.const import Platform
+from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.easy_pv_ew.const import DOMAIN
 from custom_components.easy_pv_ew.easy_pv import BASE_URL
 
 if TYPE_CHECKING:
-    from homeassistant.core import HomeAssistant
+    from homeassistant.core import HomeAssistant, State
     from pytest_homeassistant_custom_component.test_util.aiohttp import (
         AiohttpClientMocker,
     )
@@ -37,14 +39,46 @@ def auto_enable_custom_integrations(enable_custom_integrations: None) -> None:
     """Enable loading custom integrations in all tests."""
 
 
+def register_api(
+    aioclient_mock: AiohttpClientMocker, *, energy_total: float | None = None
+) -> None:
+    """
+    Replace all registered responses with successful ones.
+
+    ``energy_total`` overrides ``powerTotals`` of the station.
+    """
+    aioclient_mock.clear_requests()
+    stations = load_fixture("station_list.json")
+    if energy_total is not None:
+        stations["data"]["rows"][0]["powerTotals"] = energy_total
+
+    aioclient_mock.post(URL_LOGIN, json=load_fixture("login.json"))
+    aioclient_mock.get(URL_USER_INFO, json=load_fixture("user_info.json"))
+    aioclient_mock.get(URL_STATIONS, json=stations)
+    aioclient_mock.get(URL_DEVICES, json=load_fixture("power_list.json"))
+    aioclient_mock.get(URL_DEVICE_DATA, json=load_fixture("device_data.json"))
+
+
+def sensor_entity_id(hass: HomeAssistant, unique_id: str) -> str:
+    """Return the entity ID of the sensor with the given unique ID."""
+    entity_id = er.async_get(hass).async_get_entity_id(
+        Platform.SENSOR, DOMAIN, unique_id
+    )
+    assert entity_id, f"no sensor with unique_id {unique_id}"
+    return entity_id
+
+
+def sensor_state(hass: HomeAssistant, unique_id: str) -> State:
+    """Return the state of the sensor with the given unique ID."""
+    state = hass.states.get(sensor_entity_id(hass, unique_id))
+    assert state is not None
+    return state
+
+
 @pytest.fixture
 def mock_api(aioclient_mock: AiohttpClientMocker) -> AiohttpClientMocker:
     """Register successful responses for all Easy PV endpoints."""
-    aioclient_mock.post(URL_LOGIN, json=load_fixture("login.json"))
-    aioclient_mock.get(URL_USER_INFO, json=load_fixture("user_info.json"))
-    aioclient_mock.get(URL_STATIONS, json=load_fixture("station_list.json"))
-    aioclient_mock.get(URL_DEVICES, json=load_fixture("power_list.json"))
-    aioclient_mock.get(URL_DEVICE_DATA, json=load_fixture("device_data.json"))
+    register_api(aioclient_mock)
     return aioclient_mock
 
 

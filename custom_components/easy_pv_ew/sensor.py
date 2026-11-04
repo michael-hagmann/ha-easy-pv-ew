@@ -3,6 +3,7 @@
 import logging
 
 from homeassistant.components.sensor import (
+    RestoreSensor,
     SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
@@ -118,8 +119,14 @@ class StationEnergyTodaySensor(EasyPVStationEntity, SensorEntity):  # type: igno
         return self._data.energy_today if self._data else None
 
 
-class StationEnergyTotalSensor(EasyPVStationEntity, SensorEntity):  # type: ignore[misc]
-    """Representation of a Sensor."""
+class StationEnergyTotalSensor(EasyPVStationEntity, RestoreSensor):  # type: ignore[misc]
+    """
+    Lifetime energy of the station.
+
+    Used as the absolute energy meter of the inverter, so it must never go
+    backwards: a lower value from the cloud (glitch, 0 during an outage) is
+    ignored and the last value is kept, also across Home Assistant restarts.
+    """
 
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
@@ -136,11 +143,42 @@ class StationEnergyTotalSensor(EasyPVStationEntity, SensorEntity):  # type: igno
         )
 
         self._attr_unique_id = f"{self._id}_energy_total"
+        self._total: float | None = None
+        self._ignoring_lower = False
+
+    async def async_added_to_hass(self) -> None:
+        """Restore the last known total, then apply the current cloud value."""
+        await super().async_added_to_hass()
+        last = await self.async_get_last_sensor_data()
+        if last is not None and last.native_value is not None:
+            try:
+                self._total = float(last.native_value)
+            except TypeError, ValueError:
+                self._total = None
+        self._handle_update()
+
+    def _handle_update(self) -> None:
+        value = self._data.energy_total if self._data else None
+        if value is None:
+            return
+
+        value = float(value)
+        if self._total is None or value >= self._total:
+            self._total = value
+            self._ignoring_lower = False
+        elif not self._ignoring_lower:
+            LOGGER.warning(
+                "Cloud reports a lower total energy (%s kWh) than before "
+                "(%s kWh); keeping the previous value",
+                value,
+                self._total,
+            )
+            self._ignoring_lower = True
 
     @property
     def native_value(self) -> float | None:  # type: ignore[override]
         """Return the state of the sensor."""
-        return self._data.energy_total if self._data else None
+        return self._total
 
 
 class DevicePowerSensor(EasyPVDeviceEntity, SensorEntity):  # type: ignore[misc]

@@ -2,7 +2,7 @@
 
 import logging
 from asyncio import timeout
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -12,7 +12,9 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
+from homeassistant.util import dt as dt_util
 
+from .const import STALE_DATA_GRACE
 from .easy_pv import BaseError, EasyPVClient, LoginError
 from .model import PVDevice, PVPanel, PVStation
 
@@ -36,6 +38,7 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
         )
         self._config_entry = config_entry
         self._client = EasyPVClient(async_get_clientsession(hass))
+        self._last_success: datetime | None = None
 
     @property
     def is_logged_in(self) -> bool:
@@ -116,12 +119,28 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
         """Fetch data from API endpoint."""
         try:
             async with timeout(20):
-                return {station.id: station for station in await self._fetch_stations()}
+                data = {station.id: station for station in await self._fetch_stations()}
 
         except LoginError as err:
             raise ConfigEntryAuthFailed from err
         except (BaseError, TimeoutError) as err:
+            if self._within_grace():
+                # Short outage: keep the last valid values instead of making
+                # every entity unavailable.
+                LOGGER.debug("Update failed, keeping last values: %s", err)
+                return self.data
             raise UpdateFailed(f"Error communicating with API: {err}") from err
+
+        self._last_success = dt_util.utcnow()
+        return data
+
+    def _within_grace(self) -> bool:
+        """Return True if the last successful update is recent enough to reuse."""
+        return (
+            self.data is not None
+            and self._last_success is not None
+            and dt_util.utcnow() - self._last_success < STALE_DATA_GRACE
+        )
 
     def enumerate_devices(self) -> set[str]:
         """Enumerate all devices across all stations."""

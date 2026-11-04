@@ -46,8 +46,17 @@ class EasyPVEntity[T](CoordinatorEntity[EasyPVCoordinator]):
 
     @property
     def available(self) -> bool:  # type: ignore[override]
-        """Return True if roller and hub is available."""
-        return self.coordinator.is_logged_in
+        """
+        Return True if the last update succeeded and data for this entity exists.
+
+        The coordinator bridges short cloud outages itself (STALE_DATA_GRACE),
+        so a failed update here means the outage lasted longer.
+        """
+        return (
+            super().available
+            and self.coordinator.is_logged_in
+            and self._data is not None
+        )
 
     def _handle_update(self) -> None:
         pass
