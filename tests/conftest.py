@@ -67,7 +67,7 @@ def register_api(
     if device_total_wh is not None:
         device_data["data"]["genPowerTotal"] = device_total_wh
     if device_status is not None:
-        device_data["data"]["status"] = device_status
+        device_data["data"]["status"] = str(device_status)
 
     aioclient_mock.post(URL_LOGIN, json=load_fixture("login.json"))
     aioclient_mock.get(URL_USER_INFO, json=load_fixture("user_info.json"))

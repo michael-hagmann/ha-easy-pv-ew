@@ -14,7 +14,7 @@
         "genPower": 512.0,
         "todayPowerTotals": 1.25,
         "powerTotals": 123.45,
-        "status": 1
+        "status": "1"
       }
     ]
   }

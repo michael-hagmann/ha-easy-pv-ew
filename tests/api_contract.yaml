@@ -1,0 +1,210 @@
+# Schnittstellenvertrag der Integration Easy PV (EW) mit der Easy-PV-Cloud.
+#
+# Eigene Beschreibung dessen, was die Integration tatsächlich nutzt: je
+# Endpunkt Methode, Pfad, Parameter und die Antwortfelder, die der Code liest,
+# mit Typ und erwarteter Einheit. Keine Kopie der Herstellerbeschreibung.
+# Grundlage: Auszug „Schnittstelle laut OpenAPI“ in docs/briefing-ew.md.
+#
+# Gepflegt zusammen mit dem Code (custom_components/easy_pv_ew/easy_pv/ und
+# coordinator.py). scripts/check_api vergleicht ihn mit der neuesten lokalen
+# Fassung der Herstellerbeschreibung; tests/test_api_contract.py prüft die
+# Fixtures dagegen.
+#
+# Feldpfade: Punkte trennen Objekte, "[]" steht für die Elemente einer Liste.
+# type:     JSON-Typ laut Beschreibung (string, integer, number, boolean,
+#           object, array). Der Code verträgt bei Zahlen auch Strings.
+# unit:     Einheit, in der der Code den Wert erwartet. Weicht die Einheit in
+#           der Beschreibung ab, meldet check_api das.
+# verified: false, solange der Wert nicht an echten Daten geprüft ist
+#           (Schritt 7 im Briefing).
+# optional: true, wenn der Code ohne das Feld auskommt.
+
+version: 1
+updated: 2026-11-04
+
+envelope: &envelope
+  code:
+    type: integer
+    note: 200 = Erfolg, 401 = Token abgelehnt (dann LoginError)
+  msg:
+    type: string
+    optional: true
+
+endpoints:
+  login:
+    method: POST
+    path: /api/sys/v2/passLogin
+    auth: false
+    body:
+      num:
+        type: string
+        note: E-Mail oder Telefonnummer
+      password:
+        type: string
+    response:
+      <<: *envelope
+      data.token:
+        type: string
+        note: In der Beschreibung ist data ein freies Objekt; Feldname aus dem Original.
+
+  user_info:
+    method: GET
+    path: /api/user/v2/selectUserInfo
+    response:
+      <<: *envelope
+      data.userName:
+        type: string
+        optional: true
+        note: Titel des Config-Entrys
+      data.email:
+        type: string
+        optional: true
+        note: unique_id des Config-Entrys; fehlt bei Konten mit Telefonnummer
+
+  station_list:
+    method: GET
+    path: /api/powerStation/v3/getStationList
+    params:
+      pageNum:
+        type: integer
+      pageSize:
+        type: integer
+    response:
+      <<: *envelope
+      data.rows[].id:
+        type: string
+      data.rows[].name:
+        type: string
+        optional: true
+      data.rows[].address:
+        type: string
+        optional: true
+      data.rows[].plantLocation:
+        type: string
+        optional: true
+      data.rows[].latitude:
+        type: string
+        optional: true
+      data.rows[].longitude:
+        type: string
+        optional: true
+      data.rows[].genPower:
+        type: number
+        unit: W
+        optional: true
+        verified: false
+      data.rows[].todayPowerTotals:
+        type: number
+        unit: kWh
+        optional: true
+        verified: false
+        note: Einheit in der Beschreibung nicht angegeben; der Code liest kWh.
+      data.rows[].powerTotals:
+        type: number
+        unit: kWh
+        optional: true
+        verified: false
+        note: Einheit in der Beschreibung nicht angegeben; der Code liest kWh.
+      data.rows[].status:
+        type: string
+        optional: true
+        note: 1 online, 2 offline, 3 im Anschluss
+
+  device_list:
+    method: GET
+    path: /api/powerStation/v2/getPowerList
+    params:
+      powerId:
+        type: string
+        note: ID der Station
+    response:
+      <<: *envelope
+      data[].id:
+        type: string
+
+  device_data:
+    method: GET
+    path: /api/powerStation/v3/getDeviceDataInfo
+    params:
+      deviceId:
+        type: string
+      stationId:
+        type: string
+      date:
+        type: string
+        note: JJJJ-MM
+    response:
+      <<: *envelope
+      data.productCode:
+        type: string
+        optional: true
+      data.deviceNum:
+        type: string
+        optional: true
+        note: Seriennummer, nie loggen
+      data.status:
+        type: string
+        optional: true
+        note: 1 online, 2 offline, 3 Störung
+      data.genPower:
+        type: number
+        unit: W
+        optional: true
+      data.genPowerTotal:
+        type: number
+        unit: Wh
+        optional: true
+        verified: false
+        note: Gesamtzähler für das Energie-Setup; im MQTT-Telegramm kWh.
+      data.genpowerTodayTotals:
+        type: number
+        unit: Wh
+        optional: true
+        verified: false
+      data.genpowerMonthTotals:
+        type: number
+        unit: Wh
+        optional: true
+        verified: false
+      data.gridVoltage:
+        type: number
+        unit: V
+        optional: true
+      data.appFirmVer:
+        type: string
+        optional: true
+      data.netFirmVer:
+        type: string
+        optional: true
+      data.devicePhotovoltaicPanel:
+        type: array
+        optional: true
+        note: Kann nachts leer oder null sein.
+      data.devicePhotovoltaicPanel[].sort:
+        type: string
+        note: Nummer des Eingangs, ab 1
+      data.devicePhotovoltaicPanel[].genPower:
+        type: number
+        unit: W
+        optional: true
+      data.devicePhotovoltaicPanel[].genpowerTotals:
+        type: number
+        unit: Wh
+        optional: true
+        verified: false
+      data.devicePhotovoltaicPanel[].current:
+        type: number
+        unit: A
+        optional: true
+      data.devicePhotovoltaicPanel[].voltage:
+        type: number
+        unit: V
+        optional: true
+      data.devicePhotovoltaicPanel[].freq:
+        type: number
+        unit: Hz
+        optional: true
+      data.devicePhotovoltaicPanel[].temp:
+        type: number
+        unit: °C
+        optional: true

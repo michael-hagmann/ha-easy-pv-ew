@@ -53,14 +53,9 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         raise CannotConnect from err
 
     # Accounts registered with a phone number may have no email address, and
-    # the field names are not documented; fall back to the login name.
+    # userName may be empty; fall back to the login name.
     email = user_info.get("email") or None
-    title = (
-        user_info.get("userName")
-        or user_info.get("nickName")
-        or email
-        or data[CONF_USERNAME]
-    )
+    title = user_info.get("userName") or email or data[CONF_USERNAME]
     return {
         "title": str(title),
         "token": hub.token,

@@ -22,8 +22,8 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
   - `commit`: Lint, Tests, Prüfung auf vertrauliche Daten, Commit-Nachricht
   - `handover-pflegen`: Handover aktuell halten, Vorsession archivieren
   - `session-ende`: Wissen einordnen, Handover aufräumen
-  - `ha-testinstanz`: Test-Instanz starten, Log auswerten (Schritt 6)
-  - `fixture-anonymisieren`: echte API-Antworten in Fixtures überführen (Schritt 6)
+  - `ha-testinstanz`: Test-Instanz starten, Log auswerten (Schritt 7)
+  - `fixture-anonymisieren`: echte API-Antworten in Fixtures überführen (Schritt 7)
 - Ein Agent für Planung, Implementierung und Tests; vor dem Release ein `/code-review` über den gesamten Diff.
 - Entscheidungsfragen an Michael mit Hintergrund stellen: Ist-Zustand, Problem, Optionen mit Vor- und Nachteilen, Empfehlung. Offene Entscheidungen in `docs/offene-entscheidungen.md` festhalten statt sie nur im Chat zu stellen.
 
@@ -33,7 +33,9 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 - Vor jedem schreibenden Schritt außerhalb des Repositorys (z. B. Push, Release, Änderungen an einer HA-Instanz) zeigen, was passiert, und auf Michaels OK warten. Änderungen im Repository dürfen ohne Rückfrage erfolgen; Commits mit aussagekräftiger Nachricht.
 - **Nur lesend gegenüber der Cloud.** Die Integration nutzt ausschließlich die Endpunkte für das eigene Konto: Anmeldung (`passLogin`), Benutzerdaten (`selectUserInfo`), Stationsliste (`getStationList`), Geräteliste (`getPowerList`), Gerätedaten (`getDeviceDataInfo`). Nie Gerätebefehle, Leistungsbegrenzung, Firmware-Updates, Einstellungen oder Partner-/Händler-/Verwaltungs-Endpunkte („Open API“, DMP), auch wenn die OpenAPI-Beschreibung sie zeigt.
 - **Abrufintervall nie unter 60 s**, auch nicht als einstellbare Option; keine Abfragen außerhalb des normalen Betriebs.
-- **Die OpenAPI-Beschreibung des Herstellers kommt nicht ins Repository** (der Fork ist öffentlich, die Beschreibung ist eine interne Unterlage des Herstellers). Maßgeblich ist der Auszug im Briefing. Legt Michael sie lokal im Arbeitsverzeichnis ab, den Pfad vor dem nächsten Commit in `.gitignore` aufnehmen und prüfen, dass sie nicht gestaged ist.
+- **Die OpenAPI-Beschreibung des Herstellers und ihre Adresse kommen nie ins Repository** (der Fork ist öffentlich, die Beschreibung ist eine interne Unterlage des Herstellers). Sie liegen nur lokal: Fassungen als `local/openapi/easy-pv-JJJJ-MM-TT.json`, die Adresse als `EASYPV_OPENAPI_URL` in `.env.local`. Beides steht in `.gitignore`; vor jedem Commit prüfen, dass nichts aus `local/` und keine `.env.local` gestaged ist. Auch keine Auszüge daraus in Code, Tests, Kommentare oder Commit-Nachrichten, die der Code nicht braucht.
+- **Die Beschreibung nie automatisch herunterladen**, auch nicht per Skript oder `WebFetch`: Der Server verbietet es per `robots.txt`. Neue Fassungen holt Michael von Hand im Browser.
+- **Referenz für API-Fragen:** Existiert `local/openapi/`, gilt dort die neueste Datei (nach Datum im Namen). Fehlt sie, gilt der Auszug „Schnittstelle laut OpenAPI“ im Briefing. Maßgeblich für den Code ist der Schnittstellenvertrag `tests/api_contract.yaml` (nur, was der Code liest); Abweichungen meldet `scripts/check_api`.
 - Zugangsdaten der Easy-PV-App gibt Michael selbst in HA ein. Nie im Chat erfragen, nie in Code, Tests, Fixtures oder Logs ablegen. Rohantworten für Fixtures anonymisieren (Seriennummern, Standort, Konto).
 - `config/` enthält Laufzeitdaten der Test-Instanz und gehört nicht ins Repository, ausgenommen `config/configuration.yaml`.
 - Entwickelt und getestet wird im Devcontainer gegen die dortige Test-Instanz (siehe „Umgebung“). Die produktive HA-Instanz auf der NAS wird nicht angefasst.
@@ -56,6 +58,7 @@ Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcon
 - `scripts/test`: pytest mit `pytest-homeassistant-custom-component`; Argumente gehen an pytest durch
 - `scripts/lint`: `ruff format` und `ruff check --fix`
 - `scripts/develop`: Test-Instanz auf Port 8123 starten (Skill `ha-testinstanz`)
+- `scripts/check_api`: `tests/api_contract.yaml` mit der neuesten Fassung in `local/openapi/` vergleichen (ohne Netzwerk; ohne lokale Fassung nur ein Hinweis). Nach jeder neuen Fassung laufen lassen und Abweichungen in Vertrag, Code und Tests übernehmen.
 - `scripts/setup`: Abhängigkeiten aus `requirements_test.txt` installieren (läuft beim Erstellen des Containers)
 
 ## Code-Konventionen

@@ -1,6 +1,6 @@
 ---
 name: ha-testinstanz
-description: Die Home-Assistant-Test-Instanz im Devcontainer starten, neu starten und ihr Log auswerten, um die Integration mit echten Daten zu prüfen. Verwenden für Schritt 6 des Briefings, für „starte HA“, „schau ins Log“ oder um eine Änderung in der laufenden Instanz zu prüfen.
+description: Die Home-Assistant-Test-Instanz im Devcontainer starten, neu starten und ihr Log auswerten, um die Integration mit echten Daten zu prüfen. Verwenden für Schritt 7 des Briefings, für „starte HA“, „schau ins Log“ oder um eine Änderung in der laufenden Instanz zu prüfen.
 ---
 
 # HA-Test-Instanz
@@ -37,7 +37,7 @@ HA lädt Python-Code nicht neu. Prozess beenden und `scripts/develop` neu starte
 
 - Das Log kann Kontodaten enthalten. Vor dem Zitieren im Chat Seriennummern, IDs, Ort und Konto unkenntlich machen. Für Fixtures den Skill `fixture-anonymisieren` verwenden.
 
-## Prüfen für Schritt 6
+## Prüfen für Schritt 7
 
 - Einheiten und Datentypen der Felder (W, kWh oder Wh; Zahl oder String)
 - Gibt es in `getDeviceDataInfo` einen Gesamtzähler pro Gerät?

@@ -1,0 +1,493 @@
+#!/usr/bin/env python3
+"""
+Compare the API contract with the manufacturer's OpenAPI description.
+
+Reads tests/api_contract.yaml and the newest local copy of the OpenAPI
+description in local/openapi/ (easy-pv-YYYY-MM-DD.json, saved by hand; never
+downloaded by this script). Reports missing or renamed endpoints, parameters
+and fields, changed types and units, newer versions of the used endpoints and,
+if there are at least two local copies, the differences between the two
+newest ones.
+
+Only reads; writes nothing. Output goes to the terminal only, never copy it
+into the repository beyond what the contract needs.
+
+Exit code: 0 without findings (or without a local copy), 1 if the contract no
+longer matches the description, 2 on usage errors.
+"""
+
+# CLI tool: output via print; full-width brackets occur in the descriptions.
+# ruff: noqa: T201, RUF001
+
+from __future__ import annotations
+
+import argparse
+import difflib
+import json
+import re
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+import yaml
+
+ROOT = Path(__file__).resolve().parent.parent
+CONTRACT = ROOT / "tests" / "api_contract.yaml"
+LOCAL_DIR = ROOT / "local" / "openapi"
+
+DATE_IN_NAME = re.compile(r"(\d{4}-\d{2}-\d{2})")
+VERSIONED_PATH = re.compile(r"^(?P<prefix>.*)/v(?P<version>\d+)/(?P<name>[^/]+)$")
+# Units as the manufacturer writes them in field descriptions, e.g. "(Wh)".
+UNIT_IN_TEXT = re.compile(r"[(（]\s*(kwh|wh|kw|w|v|a|hz|℃|°c)\s*[)）]", re.IGNORECASE)
+UNIT_NAMES = {
+    "kwh": "kWh",
+    "wh": "Wh",
+    "kw": "kW",
+    "w": "W",
+    "v": "V",
+    "a": "A",
+    "hz": "Hz",
+    "℃": "°C",
+    "°c": "°C",
+}
+MAX_DEPTH = 6
+# With at least this many local copies the two newest are compared.
+COPIES_FOR_DIFF = 2
+
+ERROR = "FEHLER"
+WARNING = "WARNUNG"
+NOTE = "HINWEIS"
+
+
+@dataclass
+class Report:
+    """Findings, grouped by section."""
+
+    sections: dict[str, list[tuple[str, str]]] = field(default_factory=dict)
+
+    def add(self, section: str, level: str, text: str) -> None:
+        """Add a finding to a section."""
+        self.sections.setdefault(section, []).append((level, text))
+
+    @property
+    def has_errors(self) -> bool:
+        """Return True if any finding is an error."""
+        return any(
+            level == ERROR for items in self.sections.values() for level, _ in items
+        )
+
+    def print(self) -> None:
+        """Print all sections with their findings."""
+        for section, items in self.sections.items():
+            print(f"\n{section}")
+            if not items:
+                print("  ok")
+            for level, text in items:
+                print(f"  {level}: {text}")
+
+
+class Spec:
+    """Read access to an OpenAPI 3 description."""
+
+    def __init__(self, path: Path) -> None:
+        """Load the description from a JSON file."""
+        self.path = path
+        self.data = json.loads(path.read_text(encoding="utf-8"))
+        self.paths: dict[str, dict[str, Any]] = self.data.get("paths", {})
+        self.schemas: dict[str, Any] = self.data.get("components", {}).get(
+            "schemas", {}
+        )
+
+    def resolve(self, schema: dict[str, Any] | None) -> dict[str, Any]:
+        """Follow $ref (also inside allOf with a single entry)."""
+        seen = set()
+        while schema:
+            ref = schema.get("$ref")
+            if ref is None and len(schema.get("allOf", [])) == 1:
+                ref = schema["allOf"][0].get("$ref")
+            if ref is None or ref in seen:
+                return schema
+            seen.add(ref)
+            schema = self.schemas.get(ref.rsplit("/", 1)[-1], {})
+        return {}
+
+    def operation(self, method: str, path: str) -> dict[str, Any] | None:
+        """Return the operation for method and path, or None."""
+        return self.paths.get(path, {}).get(method.lower())
+
+    def params(self, op: dict[str, Any]) -> dict[str, dict[str, Any]]:
+        """Query parameters; object parameters are expanded to their fields."""
+        params: dict[str, dict[str, Any]] = {}
+        for param in op.get("parameters", []):
+            schema = self.resolve(param.get("schema"))
+            if schema.get("type") == "object" or (
+                schema.get("properties") and not schema.get("type")
+            ):
+                for name, prop in schema.get("properties", {}).items():
+                    params[name] = {"schema": self.resolve(prop), "required": False}
+            else:
+                params[param["name"]] = {
+                    "schema": schema,
+                    "required": bool(param.get("required")),
+                }
+        return params
+
+    def body_schema(self, op: dict[str, Any]) -> dict[str, Any]:
+        """Return the schema of the request body."""
+        content = op.get("requestBody", {}).get("content", {})
+        return self.resolve(next(iter(content.values()), {}).get("schema"))
+
+    def response_schema(self, op: dict[str, Any]) -> dict[str, Any]:
+        """Return the schema of the successful response."""
+        responses = op.get("responses", {})
+        response = responses.get("200") or next(iter(responses.values()), {})
+        content = response.get("content", {})
+        return self.resolve(next(iter(content.values()), {}).get("schema"))
+
+    def flatten(
+        self, schema: dict[str, Any], prefix: str = "", depth: int = 0
+    ) -> dict[str, tuple[str | None, str | None]]:
+        """Field path -> (type, unit), for comparing two versions."""
+        result: dict[str, tuple[str | None, str | None]] = {}
+        if depth > MAX_DEPTH:
+            return result
+        for name, raw in (schema.get("properties") or {}).items():
+            prop = self.resolve(raw)
+            path = f"{prefix}{name}"
+            result[path] = (_type(prop), _unit(raw) or _unit(prop))
+            if prop.get("type") == "array":
+                items = self.resolve(prop.get("items"))
+                result.update(self.flatten(items, f"{path}[].", depth + 1))
+            elif prop.get("properties"):
+                result.update(self.flatten(prop, f"{path}.", depth + 1))
+        return result
+
+
+def _type(schema: dict[str, Any]) -> str | None:
+    if "type" in schema:
+        return schema["type"]
+    if schema.get("properties"):
+        return "object"
+    return None
+
+
+def _unit(schema: dict[str, Any]) -> str | None:
+    match = UNIT_IN_TEXT.search(schema.get("description") or "")
+    return UNIT_NAMES[match.group(1).lower()] if match else None
+
+
+def _types_compatible(expected: str, actual: str | None) -> bool:
+    return actual == expected or (expected == "number" and actual == "integer")
+
+
+def _similar(name: str, candidates: list[str]) -> list[str]:
+    """Candidates that look like a renamed `name`."""
+    lower = {candidate.lower(): candidate for candidate in candidates}
+    if name.lower() in lower and lower[name.lower()] != name:
+        return [lower[name.lower()]]
+    return difflib.get_close_matches(name, candidates, n=3, cutoff=0.75)
+
+
+def _walk(
+    spec: Spec, root: dict[str, Any], field_path: str
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None, str]:
+    """
+    Follow a contract field path through a response schema.
+
+    Returns (raw property, resolved property, problem). problem is "" if found,
+    otherwise a description where the walk stopped.
+    """
+    schema = root
+    raw: dict[str, Any] | None = None
+    parts = field_path.split(".")
+    for index, part in enumerate(parts):
+        is_list = part.endswith("[]")
+        name = part.removesuffix("[]")
+        properties = schema.get("properties")
+        if not properties:
+            where = ".".join(parts[:index]) or "Antwort"
+            return None, None, f"untyped:{where}"
+        if name not in properties:
+            similar = _similar(name, list(properties))
+            hint = f" (umbenannt? ähnlich: {', '.join(similar)})" if similar else ""
+            return None, None, f"missing:{name}{hint}"
+        raw = properties[name]
+        prop = spec.resolve(raw)
+        if is_list:
+            if prop.get("type") != "array":
+                return None, None, f"notlist:{name} ist {_type(prop)}"
+            prop = spec.resolve(prop.get("items"))
+        schema = prop
+    return raw, schema, ""
+
+
+def check_endpoint(
+    spec: Spec, key: str, endpoint: dict[str, Any], report: Report
+) -> None:
+    """Check one endpoint of the contract against the description."""
+    method = endpoint["method"]
+    path = endpoint["path"]
+    section = f"{key}: {method} {path}"
+    report.sections.setdefault(section, [])
+
+    op = spec.operation(method, path)
+    if op is None:
+        match = VERSIONED_PATH.match(path)
+        candidates = []
+        if match:
+            candidates = [
+                other
+                for other in spec.paths
+                if other.endswith(f"/{match['name']}")
+                and other.startswith(match["prefix"])
+            ]
+        candidates = candidates or _similar(path, list(spec.paths))
+        hint = f"; vorhanden: {', '.join(sorted(candidates))}" if candidates else ""
+        report.add(section, ERROR, f"Endpunkt fehlt{hint}")
+        return
+
+    _check_newer_versions(spec, path, method, section, report)
+    _check_fields(
+        spec,
+        section,
+        "Parameter",
+        endpoint.get("params", {}),
+        {name: p["schema"] for name, p in spec.params(op).items()},
+        report,
+    )
+    for name, param in spec.params(op).items():
+        if param["required"] and name not in endpoint.get("params", {}):
+            report.add(
+                section,
+                NOTE,
+                f"Parameter {name} ist laut Beschreibung Pflicht, "
+                "der Code sendet ihn nicht",
+            )
+
+    if endpoint.get("body"):
+        body = spec.body_schema(op)
+        _check_fields(
+            spec,
+            section,
+            "Body-Feld",
+            endpoint["body"],
+            body.get("properties", {}),
+            report,
+        )
+
+    root = spec.response_schema(op)
+    for field_path, expected in (endpoint.get("response") or {}).items():
+        raw, prop, problem = _walk(spec, root, field_path)
+        if problem.startswith("untyped:"):
+            report.add(
+                section,
+                NOTE,
+                f"Feld {field_path}: {problem.removeprefix('untyped:')} ist in der "
+                "Beschreibung ein freies Objekt, nicht prüfbar",
+            )
+            continue
+        if problem:
+            level = WARNING if expected.get("optional") else ERROR
+            report.add(
+                section, level, f"Feld {field_path} fehlt: {problem.split(':', 1)[1]}"
+            )
+            continue
+        _compare(section, f"Feld {field_path}", expected, raw or {}, prop or {}, report)
+
+
+def _check_fields(
+    spec: Spec,
+    section: str,
+    label: str,
+    expected_fields: dict[str, Any],
+    actual_fields: dict[str, Any],
+    report: Report,
+) -> None:
+    for name, expected in expected_fields.items():
+        if name not in actual_fields:
+            similar = _similar(name, list(actual_fields))
+            hint = f" (umbenannt? ähnlich: {', '.join(similar)})" if similar else ""
+            report.add(section, ERROR, f"{label} {name} fehlt{hint}")
+            continue
+        raw = actual_fields[name]
+        _compare(section, f"{label} {name}", expected, raw, spec.resolve(raw), report)
+
+
+def _compare(
+    section: str,
+    label: str,
+    expected: dict[str, Any],
+    raw: dict[str, Any],
+    prop: dict[str, Any],
+    report: Report,
+) -> None:
+    actual_type = _type(prop)
+    if expected.get("type") and not _types_compatible(expected["type"], actual_type):
+        report.add(
+            section,
+            ERROR,
+            f"{label}: Typ laut Beschreibung {actual_type}, "
+            f"im Vertrag {expected['type']}",
+        )
+    spec_unit = _unit(raw) or _unit(prop)
+    unit = expected.get("unit")
+    if spec_unit and unit and spec_unit != unit:
+        report.add(
+            section,
+            ERROR,
+            f"{label}: Einheit laut Beschreibung {spec_unit}, im Vertrag {unit}",
+        )
+    elif spec_unit and not unit:
+        report.add(
+            section,
+            WARNING,
+            f"{label}: Beschreibung nennt Einheit {spec_unit}, der Vertrag keine",
+        )
+    elif unit and not spec_unit:
+        report.add(
+            section,
+            NOTE,
+            f"{label}: Einheit {unit} in der Beschreibung nicht angegeben",
+        )
+
+
+def _check_newer_versions(
+    spec: Spec, path: str, method: str, section: str, report: Report
+) -> None:
+    match = VERSIONED_PATH.match(path)
+    if not match:
+        return
+    current = int(match["version"])
+    newer = []
+    for other in spec.paths:
+        other_match = VERSIONED_PATH.match(other)
+        if (
+            other_match
+            and other_match["prefix"] == match["prefix"]
+            and other_match["name"] == match["name"]
+            and int(other_match["version"]) > current
+            and spec.operation(method, other) is not None
+        ):
+            newer.append(other)
+    for other in sorted(newer):
+        report.add(section, WARNING, f"neuere Version vorhanden: {other}")
+
+
+def compare_versions(
+    old: Spec, new: Spec, contract: dict[str, Any], report: Report
+) -> None:
+    """Differences between two local copies of the description."""
+    section = f"Vergleich {old.path.name} -> {new.path.name}"
+    report.sections.setdefault(section, [])
+
+    added = sorted(set(new.paths) - set(old.paths))
+    removed = sorted(set(old.paths) - set(new.paths))
+    for path in removed:
+        report.add(section, WARNING, f"Endpunkt entfernt: {path}")
+    for path in added:
+        report.add(section, NOTE, f"Endpunkt neu: {path}")
+
+    for key, endpoint in contract["endpoints"].items():
+        old_op = old.operation(endpoint["method"], endpoint["path"])
+        new_op = new.operation(endpoint["method"], endpoint["path"])
+        if old_op is None or new_op is None:
+            continue
+        before = old.flatten(old.response_schema(old_op))
+        after = new.flatten(new.response_schema(new_op))
+        for name in sorted(set(before) - set(after)):
+            report.add(section, WARNING, f"{key}: Antwortfeld entfernt: {name}")
+        for name in sorted(set(after) - set(before)):
+            report.add(section, NOTE, f"{key}: Antwortfeld neu: {name}")
+        for name in sorted(set(before) & set(after)):
+            if before[name] != after[name]:
+                report.add(
+                    section,
+                    WARNING,
+                    f"{key}: {name} geändert: Typ/Einheit "
+                    f"{before[name]} -> {after[name]}",
+                )
+        old_params = {n: _type(p["schema"]) for n, p in old.params(old_op).items()}
+        new_params = {n: _type(p["schema"]) for n, p in new.params(new_op).items()}
+        if old_params != new_params:
+            report.add(
+                section,
+                WARNING,
+                f"{key}: Parameter geändert: {old_params} -> {new_params}",
+            )
+
+
+def local_copies(directory: Path) -> list[Path]:
+    """Local copies, oldest first (by the date in the file name, else mtime)."""
+    files = [path for path in directory.glob("*.json") if path.is_file()]
+
+    def sort_key(path: Path) -> tuple[str, float]:
+        match = DATE_IN_NAME.search(path.name)
+        return (match.group(1) if match else "", path.stat().st_mtime)
+
+    return sorted(files, key=sort_key)
+
+
+def _show(path: Path) -> Path:
+    path = path.resolve()
+    return path.relative_to(ROOT) if path.is_relative_to(ROOT) else path
+
+
+def main() -> int:
+    """Run the check and return the exit code."""
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument(
+        "spec",
+        nargs="?",
+        type=Path,
+        help="OpenAPI-Datei (Standard: neueste Datei in local/openapi/)",
+    )
+    parser.add_argument("--contract", type=Path, default=CONTRACT)
+    parser.add_argument(
+        "--dir", type=Path, default=LOCAL_DIR, help="Ordner mit den lokalen Fassungen"
+    )
+    args = parser.parse_args()
+
+    copies = local_copies(args.dir) if args.dir.is_dir() else []
+    spec_path: Path | None = args.spec or (copies[-1] if copies else None)
+    if spec_path is None:
+        print(
+            f"Keine lokale OpenAPI-Beschreibung in {_show(args.dir)}/ "
+            "gefunden; nichts zu prüfen.\nNeue Fassungen von Hand im Browser "
+            "holen und als easy-pv-JJJJ-MM-TT.json dort ablegen."
+        )
+        return 0
+    if not spec_path.is_file():
+        print(f"Datei nicht gefunden: {spec_path}", file=sys.stderr)
+        return 2
+
+    contract = yaml.safe_load(args.contract.read_text(encoding="utf-8"))
+    spec = Spec(spec_path)
+    print(f"Vertrag:      {_show(args.contract)}")
+    print(f"Beschreibung: {spec_path.name} ({len(spec.paths)} Pfade)")
+
+    report = Report()
+    for key, endpoint in contract["endpoints"].items():
+        check_endpoint(spec, key, endpoint, report)
+
+    if args.spec is None and len(copies) >= COPIES_FOR_DIFF:
+        compare_versions(Spec(copies[-2]), spec, contract, report)
+    elif args.spec is None:
+        print("Nur eine lokale Fassung, kein Vorher/Nachher-Vergleich.")
+
+    report.print()
+    counts = {
+        level: sum(
+            1 for items in report.sections.values() for lvl, _ in items if lvl == level
+        )
+        for level in (ERROR, WARNING, NOTE)
+    }
+    print(
+        f"\n{counts[ERROR]} Fehler, {counts[WARNING]} Warnungen, "
+        f"{counts[NOTE]} Hinweise"
+    )
+    return 1 if report.has_errors else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
