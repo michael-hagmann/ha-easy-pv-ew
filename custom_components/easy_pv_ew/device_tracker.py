@@ -2,7 +2,7 @@
 
 import logging
 
-from homeassistant.components.device_tracker.config_entry import TrackerEntity
+from homeassistant.components.device_tracker import TrackerEntity
 from homeassistant.components.device_tracker.const import SourceType
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant

@@ -57,20 +57,20 @@ DEVICE_LIST: dict[str, Field] = {
 }
 
 DEVICE_DATA: dict[str, Field] = {
-    "productCode": Field("string", loggable=True),
+    # May contain a device-specific suffix (e.g. VN2T08EU-<code>), never log.
+    "productCode": Field("string"),
     "deviceNum": Field("string"),
     "status": Field("string", loggable=True),
     "genPower": _measurement(0, 5_000),
-    "genPowerTotal": _measurement(0, 1_000_000_000),
-    "genpowerTodayTotals": _measurement(0, 100_000),
-    "genpowerMonthTotals": _measurement(0, 3_000_000),
+    "genPowerTotal": _measurement(0, 1_000_000),
+    "genpowerTodayTotals": _measurement(0, 100),
+    "genpowerMonthTotals": _measurement(0, 3_000),
     "gridVoltage": _measurement(0, 300),
     "appFirmVer": Field("string", loggable=True),
     "netFirmVer": Field("string", loggable=True),
     "devicePhotovoltaicPanel": Field("array"),
     "devicePhotovoltaicPanel[].sort": Field("string", optional=False, loggable=True),
     "devicePhotovoltaicPanel[].genPower": _measurement(0, 2_000),
-    "devicePhotovoltaicPanel[].genpowerTotals": _measurement(0, 1_000_000_000),
     "devicePhotovoltaicPanel[].current": _measurement(0, 30),
     "devicePhotovoltaicPanel[].voltage": _measurement(0, 100),
     "devicePhotovoltaicPanel[].freq": _measurement(0, 70),

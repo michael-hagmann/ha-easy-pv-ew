@@ -6,9 +6,9 @@
     "deviceNum": "SN0000000000",
     "status": "1",
     "genPower": 512.0,
-    "genPowerTotal": 123450,
-    "genpowerTodayTotals": 1250,
-    "genpowerMonthTotals": 8500,
+    "genPowerTotal": 123.45,
+    "genpowerTodayTotals": 1.25,
+    "genpowerMonthTotals": 8.5,
     "gridVoltage": 230.4,
     "appFirmVer": "1.0.0",
     "netFirmVer": "2.0.0",
@@ -16,7 +16,6 @@
       {
         "sort": "1",
         "genPower": 260.0,
-        "genpowerTotals": 62000,
         "inputPower": 265.0,
         "current": 7.1,
         "voltage": 36.6,
@@ -26,7 +25,6 @@
       {
         "sort": "2",
         "genPower": 252.0,
-        "genpowerTotals": 61450,
         "inputPower": 257.0,
         "current": 6.9,
         "voltage": 36.5,

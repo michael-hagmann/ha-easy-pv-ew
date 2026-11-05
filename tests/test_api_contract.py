@@ -114,8 +114,9 @@ def _schema(tree: dict[str, Any]) -> dict[str, Any]:
     if "__leaf__" in tree:
         expected = tree["__leaf__"]
         schema: dict[str, Any] = {"type": expected["type"]}
-        if expected.get("unit"):
-            schema["description"] = f"Wert ({expected['unit']})"
+        unit = expected.get("spec_unit") or expected.get("unit")
+        if unit:
+            schema["description"] = f"Wert ({unit})"
         children = {k: v for k, v in tree.items() if k != "__leaf__"}
         if children and expected["type"] == "array":
             schema["items"] = _schema(children)
@@ -216,7 +217,8 @@ def test_check_api_reports_changes(tmp_path: Path) -> None:
     spec = _build_spec(CONTRACT)
     props = _device_data_props(spec)
     props["genPowerTotals"] = props.pop("genPowerTotal")  # renamed
-    props["genpowerTodayTotals"]["description"] = "Wert (kWh)"  # unit changed
+    props["genPower"]["description"] = "Wert (kW)"  # unit changed
+    props["genpowerTodayTotals"]["description"] = "Wert (kWh)"  # known unit changed
     props["gridVoltage"]["type"] = "string"  # type changed
     spec["paths"]["/api/powerStation/v4/getDeviceDataInfo"] = copy.deepcopy(
         spec["paths"]["/api/powerStation/v3/getDeviceDataInfo"]
@@ -229,7 +231,10 @@ def test_check_api_reports_changes(tmp_path: Path) -> None:
     assert result.returncode == 1, out
     assert "data.genPowerTotal fehlt" in out
     assert "ähnlich: genPowerTotals" in out
-    assert "Einheit laut Beschreibung kWh, im Vertrag Wh" in out
+    assert "Einheit laut Beschreibung kW, im Vertrag W" in out
+    assert (
+        "data.genpowerTodayTotals: Einheit laut Beschreibung kWh, bekannt war Wh"
+    ) in out
     assert "Feld data.gridVoltage: Typ laut Beschreibung string" in out
     assert "neuere Version vorhanden: /api/powerStation/v4/getDeviceDataInfo" in out
     assert "Endpunkt fehlt" in out

@@ -26,7 +26,6 @@ class PVPanel(PVEntity):
     power: float | None
     current: float | None
     voltage: float | None
-    energy_total: float | None  # kWh
     temperature: float | None
     frequency: float | None
 

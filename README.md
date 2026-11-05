@@ -71,9 +71,9 @@ One device is created per station, per inverter and per PV input (MPPT), linked 
 | --- | --- |
 | Station | Power (W), energy today, lifetime energy (kWh); location (diagnostic) |
 | Inverter | Power (W), energy today, energy this month, lifetime energy (kWh), grid voltage (V); online, fault, firmware versions (diagnostic) |
-| PV input | Power (W), voltage (V), current (A); lifetime energy, temperature, grid frequency (diagnostic) |
+| PV input | Power (W), voltage (V), current (A); temperature, grid frequency (diagnostic, not reported by every inverter) |
 
-Energy sensors use `state_class: total_increasing` and power, voltage and current use `measurement`, so all of them have long-term statistics. The **lifetime energy of the inverter** is meant for the Energy dashboard (*Solar production*).
+Energy sensors use `state_class: total_increasing` and power, voltage and current use `measurement`, so all of them have long-term statistics. Both lifetime energy sensors suit the Energy dashboard (*Solar production*). The inverter counts since it was last registered in the Easy PV app; the station counts since the station was created and continues after a new registration of the inverter.
 
 A diagnostics download (**Settings → Devices & services → Easy PV (EW) → ⋮ → Download diagnostics**) contains the last raw cloud response with serial numbers, location, account data and tokens removed.
 
@@ -91,7 +91,7 @@ The integration polls the Easy PV cloud (`cloud_polling`); there is no local int
 
 - Works only through the Easy PV cloud; without internet access there are no values. The cloud API is not officially documented and may change without notice.
 - Accuracy depends on the inverter: an independent test found the app values 8–10 % lower than a reference meter. The integration shows the cloud values unchanged.
-- The units of the energy values have not yet been verified against a running EW VN2T08EU in every case; compare the lifetime energy with the app after setup.
+- The lifetime energy of the inverter starts again at 0 when the inverter is registered anew in the Easy PV app; the station total continues.
 - The daily and monthly energy is reset by the cloud, possibly in the time zone of the manufacturer's servers rather than your local time.
 - The login token cannot be refreshed. When it expires, the entities become unavailable and Home Assistant asks you to re-authenticate (**Settings → Devices & services**).
 - The location tracker of a station shows the zone (e.g. `home`), not the address.

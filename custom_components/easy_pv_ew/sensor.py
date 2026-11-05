@@ -174,12 +174,6 @@ PANEL_SENSORS: tuple[EasyPVSensorEntityDescription, ...] = (
         requires_online=True,
         value_fn=_panel(lambda panel: panel.current),
     ),
-    # Lifetime energy of one PV input: diagnostic, no rollback protection.
-    EasyPVSensorEntityDescription(
-        **_ENERGY_TOTAL,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=_panel(lambda panel: panel.energy_total),
-    ),
     EasyPVSensorEntityDescription(
         key="temperature",
         device_class=SensorDeviceClass.TEMPERATURE,

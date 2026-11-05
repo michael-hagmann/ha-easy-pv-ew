@@ -38,6 +38,8 @@ if TYPE_CHECKING:
         "wifiSsid",
         "phoneNumber",
         "token",
+        "productCode",
+        "customProductCode",
     ],
 )
 def test_sensitive_keys(key: str) -> None:
@@ -58,7 +60,6 @@ def test_sensitive_keys(key: str) -> None:
         "current",
         "voltage",
         "sort",
-        "productCode",
         "appFirmVer",
         "netFirmVer",
         "code",
@@ -109,3 +110,13 @@ async def test_debug_log_is_anonymized(
         "Testkonto",
     ):
         assert secret not in log, f"{secret!r} leaked into the log"
+
+
+def test_product_code_redacted() -> None:
+    """Real product codes carry a device-specific suffix and are never shown."""
+    data = load_fixture("device_data.json")
+    data["data"]["productCode"] = "VN2T08EU-X000000"
+    result = redact(data)
+
+    assert result["data"]["productCode"] == REDACTED
+    assert "X000000" not in str(result)

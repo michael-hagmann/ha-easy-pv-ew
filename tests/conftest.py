@@ -43,7 +43,7 @@ def register_api(
     aioclient_mock: AiohttpClientMocker,
     *,
     energy_total: float | None = None,
-    device_total_wh: float | None = None,
+    device_total: float | None = None,
     device_status: int | None = None,
     device_data: dict[str, Any] | None = None,
     device_text: str | None = None,
@@ -53,7 +53,7 @@ def register_api(
     Replace all registered responses with successful ones.
 
     ``energy_total`` overrides ``powerTotals`` of the station (kWh),
-    ``device_total_wh`` ``genPowerTotal`` of the inverter (Wh) and
+    ``device_total`` ``genPowerTotal`` of the inverter (kWh) and
     ``device_status`` its ``status``; ``device_data`` replaces the whole
     getDeviceDataInfo response, ``device_text`` sends it as raw text (e.g.
     broken JSON) and ``power_list`` replaces the getPowerList response.
@@ -64,8 +64,8 @@ def register_api(
         stations["data"]["rows"][0]["powerTotals"] = energy_total
     if device_data is None:
         device_data = load_fixture("device_data.json")
-    if device_total_wh is not None:
-        device_data["data"]["genPowerTotal"] = device_total_wh
+    if device_total is not None:
+        device_data["data"]["genPowerTotal"] = device_total
     if device_status is not None:
         device_data["data"]["status"] = str(device_status)
 

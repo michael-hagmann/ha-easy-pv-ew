@@ -15,6 +15,8 @@
 #           object, array). Der Code verträgt bei Zahlen auch Strings.
 # unit:     Einheit, in der der Code den Wert erwartet. Weicht die Einheit in
 #           der Beschreibung ab, meldet check_api das.
+# spec_unit: Einheit laut Beschreibung, wenn sie nachweislich nicht stimmt;
+#           check_api meldet dann nur eine Änderung der Beschreibung.
 # verified: false, solange der Wert nicht an echten Daten geprüft ist
 #           (Schritt 7 im Briefing).
 # optional: true, wenn der Code ohne das Feld auskommt.
@@ -104,21 +106,24 @@ endpoints:
         range: [0, 100000]
         unit: W
         optional: true
-        verified: false
+        verified: true
       data.rows[].todayPowerTotals:
         type: number
         range: [0, 10000]
         unit: kWh
         optional: true
-        verified: false
-        note: Einheit in der Beschreibung nicht angegeben; der Code liest kWh.
+        verified: true
+        note: Einheit in der Beschreibung nicht angegeben; kWh, geprüft 05.11.2026 gegen die App.
       data.rows[].powerTotals:
         type: number
         range: [0, 10000000]
         unit: kWh
         optional: true
-        verified: false
-        note: Einheit in der Beschreibung nicht angegeben; der Code liest kWh.
+        verified: true
+        note: >-
+          Gesamtertrag der Station seit ihrer Anlage; läuft bei einer neuen
+          Registrierung des Geräts weiter. Einheit in der Beschreibung nicht
+          angegeben; kWh, geprüft 05.11.2026 gegen die App.
       data.rows[].status:
         type: string
         optional: true
@@ -152,6 +157,7 @@ endpoints:
       data.productCode:
         type: string
         optional: true
+        note: Modell mit gerätebezogenem Zusatz (VN2T08EU-<code>), nie loggen
       data.deviceNum:
         type: string
         optional: true
@@ -167,23 +173,31 @@ endpoints:
         optional: true
       data.genPowerTotal:
         type: number
-        range: [0, 1000000000]
-        unit: Wh
+        range: [0, 1000000]
+        unit: kWh
+        spec_unit: Wh
         optional: true
-        verified: false
-        note: Gesamtzähler für das Energie-Setup; im MQTT-Telegramm kWh.
+        verified: true
+        note: >-
+          Gesamtzähler des Geräts seit der letzten Registrierung in der App
+          (nicht seit Inbetriebnahme). Laut OpenAPI Wh, tatsächlich kWh
+          (geprüft 05.11.2026 gegen App und Station).
       data.genpowerTodayTotals:
         type: number
-        range: [0, 100000]
-        unit: Wh
+        range: [0, 100]
+        unit: kWh
+        spec_unit: Wh
         optional: true
-        verified: false
+        verified: true
+        note: Laut OpenAPI Wh, tatsächlich kWh (geprüft 05.11.2026).
       data.genpowerMonthTotals:
         type: number
-        range: [0, 3000000]
-        unit: Wh
+        range: [0, 3000]
+        unit: kWh
+        spec_unit: Wh
         optional: true
-        verified: false
+        verified: true
+        note: Laut OpenAPI Wh, tatsächlich kWh (geprüft 05.11.2026).
       data.gridVoltage:
         type: number
         range: [0, 300]
@@ -207,12 +221,6 @@ endpoints:
         range: [0, 2000]
         unit: W
         optional: true
-      data.devicePhotovoltaicPanel[].genpowerTotals:
-        type: number
-        range: [0, 1000000000]
-        unit: Wh
-        optional: true
-        verified: false
       data.devicePhotovoltaicPanel[].current:
         type: number
         range: [0, 30]

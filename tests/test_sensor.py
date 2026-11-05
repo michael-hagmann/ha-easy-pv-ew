@@ -45,7 +45,6 @@ PANEL_1 = "1001_2001_panel_1"
         (f"{PANEL_1}_power", "260.0", "power", "measurement", "W"),
         (f"{PANEL_1}_voltage", "36.6", "voltage", "measurement", "V"),
         (f"{PANEL_1}_current", "7.1", "current", "measurement", "A"),
-        (f"{PANEL_1}_energy_total", "62.0", "energy", "total_increasing", "kWh"),
         (f"{PANEL_1}_temperature", "35.5", "temperature", "measurement", "°C"),
         (f"{PANEL_1}_frequency", "49.98", "frequency", "measurement", "Hz"),
     ],

@@ -63,6 +63,11 @@ SENSITIVE_WORDS = frozenset(
     }
 )
 
+# Whole field names that hold identifying data although none of their words
+# does: the product code of real devices carries a device-specific suffix
+# (VN2T08EU-<code>), which may be part of the serial number.
+SENSITIVE_KEYS = frozenset({"productcode", "customproductcode"})
+
 _WORD = re.compile(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+")
 
 
@@ -80,7 +85,7 @@ def _words(key: str) -> set[str]:
 
 def is_sensitive(key: str) -> bool:
     """Return True if a field name looks like it holds identifying data."""
-    return not SENSITIVE_WORDS.isdisjoint(_words(key))
+    return key.lower() in SENSITIVE_KEYS or not SENSITIVE_WORDS.isdisjoint(_words(key))
 
 
 def redact(data: Any) -> Any:

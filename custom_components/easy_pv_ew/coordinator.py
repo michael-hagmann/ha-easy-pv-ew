@@ -28,10 +28,6 @@ from .model import PVDevice, PVPanel, PVStation
 
 LOGGER = logging.getLogger(__name__)
 
-# getDeviceDataInfo reports energy in Wh according to the OpenAPI description
-# (the MQTT telegram of the device uses kWh). Verify with real data.
-WH_PER_KWH = 1000
-
 
 class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
     """My custom coordinator."""
@@ -233,9 +229,11 @@ def _parse_device(station_id: str, device_id: str, data: dict[str, Any]) -> PVDe
         id=device_id,
         station_id=station_id,
         power=_number(data.get("genPower")),
-        energy_month=_wh_to_kwh(data.get("genpowerMonthTotals")),
-        energy_today=_wh_to_kwh(data.get("genpowerTodayTotals")),
-        energy_total=_wh_to_kwh(data.get("genPowerTotal")),
+        # The OpenAPI description says Wh, but the cloud reports kWh (checked
+        # against the app and the station totals with real data).
+        energy_month=_number(data.get("genpowerMonthTotals")),
+        energy_today=_number(data.get("genpowerTodayTotals")),
+        energy_total=_number(data.get("genPowerTotal")),
         status=_status(data.get("status")),
         product_code=product_code,
         device_serial=_text(data.get("deviceNum")),
@@ -263,7 +261,6 @@ def _parse_panel(
         power=_number(panel_data.get("genPower")),
         current=_number(panel_data.get("current")),
         voltage=_number(panel_data.get("voltage")),
-        energy_total=_wh_to_kwh(panel_data.get("genpowerTotals")),
         temperature=_number(panel_data.get("temp")),
         frequency=_number(panel_data.get("freq")),
     )
@@ -283,12 +280,6 @@ def _number(value: Any) -> float | None:
     except TypeError, ValueError:
         return None
     return number if math.isfinite(number) else None
-
-
-def _wh_to_kwh(value: Any) -> float | None:
-    """Convert an energy value in Wh from the cloud to kWh."""
-    number = _number(value)
-    return None if number is None else number / WH_PER_KWH
 
 
 def _status(value: Any) -> int | None:

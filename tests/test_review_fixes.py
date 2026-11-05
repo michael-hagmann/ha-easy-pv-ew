@@ -242,7 +242,7 @@ async def test_lasting_lower_total_is_taken_over(
     freezer: FrozenDateTimeFactory,
 ) -> None:
     """A lower total reported for TOTAL_RESET_AFTER is accepted as a reset."""
-    register_api(aioclient_mock, device_total_wh=50_000)
+    register_api(aioclient_mock, device_total=50.0)
     await _poll(hass, freezer)
     assert sensor_state(hass, DEVICE_TOTAL).state == "123.45"
 
@@ -260,7 +260,7 @@ async def test_zero_total_is_never_taken_over(
     freezer: FrozenDateTimeFactory,
 ) -> None:
     """0 means no data and never resets the total, however long it lasts."""
-    register_api(aioclient_mock, device_total_wh=0)
+    register_api(aioclient_mock, device_total=0)
     await _poll(hass, freezer)
     await _poll(hass, freezer, TOTAL_RESET_AFTER * 2)
 
@@ -274,14 +274,14 @@ async def test_short_lower_total_restarts_timer(
     freezer: FrozenDateTimeFactory,
 ) -> None:
     """A normal value in between restarts the wait for a reset."""
-    register_api(aioclient_mock, device_total_wh=50_000)
+    register_api(aioclient_mock, device_total=50.0)
     await _poll(hass, freezer)
     await _poll(hass, freezer, TOTAL_RESET_AFTER - POLL * 2)
 
-    register_api(aioclient_mock, device_total_wh=123_500)
+    register_api(aioclient_mock, device_total=123.5)
     await _poll(hass, freezer)
 
-    register_api(aioclient_mock, device_total_wh=50_000)
+    register_api(aioclient_mock, device_total=50.0)
     await _poll(hass, freezer)
     await _poll(hass, freezer)
     assert sensor_state(hass, DEVICE_TOTAL).state == "123.5"

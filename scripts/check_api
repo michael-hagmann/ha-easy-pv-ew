@@ -332,6 +332,19 @@ def _compare(
         )
     spec_unit = _unit(raw) or _unit(prop)
     unit = expected.get("unit")
+    # spec_unit: known deviation, the description names a different unit than
+    # the cloud actually sends (checked with real data). Only a change of the
+    # description against spec_unit is reported then.
+    known = expected.get("spec_unit")
+    if known:
+        if spec_unit != known:
+            report.add(
+                section,
+                WARNING,
+                f"{label}: Einheit laut Beschreibung {spec_unit or 'keine'}, "
+                f"bekannt war {known} (tatsächlich {unit})",
+            )
+        return
     if spec_unit and unit and spec_unit != unit:
         report.add(
             section,

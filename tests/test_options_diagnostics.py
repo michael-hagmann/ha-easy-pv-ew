@@ -64,7 +64,7 @@ async def test_diagnostics_anonymized(
 
     raw = diagnostics["raw_data"]
     assert raw["stations"][0]["powerTotals"] == 123.45
-    assert raw["device_data"][0]["genpowerMonthTotals"] == 8500
+    assert raw["device_data"][0]["genpowerMonthTotals"] == 8.5
     assert diagnostics["coordinator"]["last_update_success"] is True
     assert diagnostics["coordinator"]["last_success"].endswith(".100123+00:00")
 

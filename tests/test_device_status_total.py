@@ -59,7 +59,6 @@ COUNTERS = [
     f"{DEVICE}_energy_today",
     f"{DEVICE}_energy_month",
     DEVICE_TOTAL,
-    f"{PANEL_1}_energy_total",
     f"{DEVICE}_firmware_app",
 ]
 
@@ -91,27 +90,57 @@ async def test_device_total_from_gen_power_total(
     aioclient_mock: AiohttpClientMocker,
     freezer: FrozenDateTimeFactory,
 ) -> None:
-    """The inverter total comes from genPowerTotal (Wh) and is shown in kWh."""
-    register_api(aioclient_mock, device_total_wh=500_000)
+    """The inverter total comes from genPowerTotal, which the cloud sends in kWh."""
+    register_api(aioclient_mock, device_total=500.0)
     await _poll(hass, freezer)
 
     assert sensor_state(hass, DEVICE_TOTAL).state == "500.0"
 
 
-@pytest.mark.parametrize("lower_wh", [0, 100_000, 123_449])
+@pytest.mark.usefixtures("setup_integration")
+async def test_device_energy_is_kwh_not_wh(
+    hass: HomeAssistant,
+    aioclient_mock: AiohttpClientMocker,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """
+    Energy of getDeviceDataInfo is kWh, despite "Wh" in the OpenAPI description.
+
+    Values as seen on 05.11.2026: the device reported 0.025 for today while the
+    station reported 0.03 kWh; read as Wh, HA showed 0.00 kWh.
+    """
+    data = load_fixture("device_data.json")
+    data["data"].update(
+        genPowerTotal=91.23, genpowerTodayTotals=0.025, genpowerMonthTotals=0.03
+    )
+    register_api(aioclient_mock, device_data=data)
+    await _poll(hass, freezer)
+
+    assert sensor_state(hass, DEVICE_TOTAL).state == "123.45"  # never lower
+    assert sensor_state(hass, f"{DEVICE}_energy_today").state == "0.025"
+    assert sensor_state(hass, f"{DEVICE}_energy_month").state == "0.03"
+    # genpowerTotals of an input is 400.0 on both inputs, not an energy value.
+    registry = er.async_get(hass)
+    assert (
+        registry.async_get_entity_id(Platform.SENSOR, DOMAIN, f"{PANEL_1}_energy_total")
+        is None
+    )
+
+
+@pytest.mark.parametrize("lower", [0, 100.0, 123.44])
 @pytest.mark.usefixtures("setup_integration")
 async def test_device_total_never_decreases(
     hass: HomeAssistant,
     aioclient_mock: AiohttpClientMocker,
     freezer: FrozenDateTimeFactory,
-    lower_wh: int,
+    lower: float,
 ) -> None:
     """A lower genPowerTotal is ignored; higher values are taken over."""
-    register_api(aioclient_mock, device_total_wh=lower_wh)
+    register_api(aioclient_mock, device_total=lower)
     await _poll(hass, freezer)
     assert sensor_state(hass, DEVICE_TOTAL).state == "123.45"
 
-    register_api(aioclient_mock, device_total_wh=125_500)
+    register_api(aioclient_mock, device_total=125.5)
     await _poll(hass, freezer)
     assert sensor_state(hass, DEVICE_TOTAL).state == "125.5"
 
