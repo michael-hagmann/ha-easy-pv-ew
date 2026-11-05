@@ -88,13 +88,14 @@ Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcon
 - Code: `custom_components/easy_pv_ew/`, API-Client in `easy_pv/__init__.py`. Kommentare und Docstrings auf Englisch wie im Original, Commit-Nachrichten und Dokumentation auf Deutsch.
 - Der API-Client bekommt die Session von `async_get_clientsession(hass)` und legt nie eine eigene an.
 - Fehlertypen des Clients: `LoginError` (Anmeldung/Token) → im Coordinator `ConfigEntryAuthFailed`; alle anderen `BaseError` (`ApiError`, `InvalidResponseError`, `CommunicationError` für Netzwerk/DNS/Timeout) → `UpdateFailed`. `LoginError` nie unterwegs abfangen oder in `UpdateFailed` umwandeln, sonst startet kein Reauth.
-- Nie Tokens, E-Mail, Seriennummern, IDs oder Standort loggen, auch nicht auf Debug. Der Debug-Logger der Integration ist in der Test-Instanz aktiv. Rohantworten nur anonymisiert loggen.
+- Nie Tokens, E-Mail, Seriennummern, IDs oder Standort loggen, auch nicht auf Debug. Auch `productCode` nicht: Bei echten Geräten trägt er einen gerätebezogenen Zusatz (`VN2T08EU-<code>`), der Teil der Seriennummer sein kann; er steht deshalb auch im Gerätenamen und in den Entity-IDs des Geräts. Der Debug-Logger der Integration ist in der Test-Instanz aktiv. Rohantworten nur anonymisiert loggen.
 - Tests: Fixtures in `tests/fixtures/` (nachgebaut bzw. anonymisiert, feste Platzhalter wie `test-token`, Station `1001`, Gerät `2001`). Messwerte in Fixtures dürfen keinem Platzhalter gleichen (z. B. Frequenz 49.98 statt 50.0, weil der Breitengrad 50.0 ist), sonst schlagen die Anonymisierungstests fehl. Dasselbe gilt für Zeitstempel: Mikrosekunden können zufällig einen Platzhalter enthalten (`…12.100123` enthält `1001`); in Leck-Tests feste Zeiten setzen. HTTP über `aioclient_mock`; die Fixture `mock_api` in `tests/conftest.py` registriert alle Endpunkte erfolgreich.
 - Für jede Fehlerbehebung aus dem Briefing einen Test, der den Fehler zeigt.
 
 ## Schnittstelle zum Energie-Setup (Kurzfassung)
 
-- Gesamtertrag des EW: kWh aus `genPowerTotal` von `getDeviceDataInfo` (laut Beschreibung Wh, also / 1000; die Einheit an echten Daten prüfen, im MQTT-Telegramm des Geräts ist es kWh), `device_class: energy`, `state_class: total_increasing`, absolut seit Inbetriebnahme, nie ein Rücksprung, stabile Entity-ID.
+- Gesamtertrag des EW: kWh aus `powerTotals` der Station (`getStationList`), nicht `genPowerTotal` des Geräts (entschieden 05.11.2026: der Gerätezähler fällt bei einer Neuregistrierung in der App auf 0, der Stationszähler läuft weiter). `device_class: energy`, `state_class: total_increasing`, nie ein Rücksprung, stabile Entity-ID.
+- Einheiten an echten Daten geprüft (05.11.2026): Alle Energiefelder sind kWh, auch die von `getDeviceDataInfo`, für die die OpenAPI-Beschreibung Wh nennt (`spec_unit: Wh` im Vertrag). Nicht durch 1000 teilen.
 - Leistung des EW: W, `device_class: power`, `state_class: measurement`.
 - Bei Cloud-Ausfall lieber `unavailable` als falsche Werte.
 
