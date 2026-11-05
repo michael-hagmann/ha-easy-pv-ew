@@ -125,7 +125,11 @@ class EasyPVCoordinator(DataUpdateCoordinator[dict[str, PVStation]]):
             if self._within_grace():
                 # Short outage: keep the last valid values instead of making
                 # every entity unavailable.
-                LOGGER.debug("Update failed, keeping last values: %s", err)
+                LOGGER.debug(
+                    "Update failed, keeping last values: %s: %s",
+                    type(err).__name__,
+                    err,
+                )
                 return self.data
             raise _cannot_connect(err) from err
 

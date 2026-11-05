@@ -103,6 +103,9 @@ class EasyPVClient:
         if auth:
             headers["Authorization"] = f"Bearer {self._token}"
 
+        # Path only: the query parameters contain station and device IDs.
+        # Shows which request hangs when an update runs into the timeout.
+        LOG.debug("Request %s %s", method, path)
         try:
             async with self._session.request(
                 method,

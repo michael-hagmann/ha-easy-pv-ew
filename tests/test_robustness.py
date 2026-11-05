@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 from typing import TYPE_CHECKING
+from unittest.mock import patch
 
 import aiohttp
 import pytest
@@ -16,6 +17,7 @@ from pytest_homeassistant_custom_component.common import (
 )
 
 from custom_components.easy_pv_ew.const import DOMAIN
+from custom_components.easy_pv_ew.coordinator import EasyPVCoordinator
 
 from .conftest import URL_STATIONS, register_api, sensor_entity_id, sensor_state
 
@@ -58,6 +60,21 @@ async def test_short_outage_keeps_values(
         await _poll(hass, freezer)
         assert sensor_state(hass, POWER).state == "512.0"
         assert sensor_state(hass, TOTAL).state == "123.45"
+
+
+@pytest.mark.usefixtures("setup_integration")
+async def test_short_outage_logs_error_type(
+    hass: HomeAssistant,
+    freezer: FrozenDateTimeFactory,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """The overall 20 s timeout has an empty message; log the error type."""
+    caplog.set_level("DEBUG", logger="custom_components.easy_pv_ew")
+
+    with patch.object(EasyPVCoordinator, "_fetch_stations", side_effect=TimeoutError):
+        await _poll(hass, freezer)
+
+    assert "keeping last values: TimeoutError: " in caplog.text
 
 
 @pytest.mark.usefixtures("setup_integration")

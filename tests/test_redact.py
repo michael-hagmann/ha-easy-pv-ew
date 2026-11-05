@@ -96,6 +96,9 @@ async def test_debug_log_is_anonymized(
     log = caplog.text
     assert "getStationList" in log
     assert "getDeviceDataInfo" in log
+    assert "Request GET /api/powerStation/v3/getDeviceDataInfo" in log, (
+        "request start shows which call hangs on a timeout"
+    )
     assert "123.45" in log, "lifetime total must be visible for step 6"
     for secret in (
         "1001",
