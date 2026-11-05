@@ -127,7 +127,6 @@ class EasyPVDeviceEntity(EasyPVEntity[PVDevice]):
             model=self._data.product_code,
             serial_number=self._data.device_serial,
             sw_version=self._data.app_fw,
-            via_device=(DOMAIN, self._station_id),
         )
 
     def __init__(
@@ -171,7 +170,6 @@ class EasyPVPanelEntity(EasyPVEntity[PVPanel]):
                     "connected_inverter": parent.entity_name if parent else "",
                     "panel_number": str(self._panel_number + 1),
                 },
-                via_device=(DOMAIN, f"{self._station_id}_{self._device_id}"),
             )
             if self._data
             else None

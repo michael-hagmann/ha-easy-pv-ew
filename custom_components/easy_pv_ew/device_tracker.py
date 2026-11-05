@@ -51,11 +51,6 @@ class StationDeviceTracker(EasyPVStationEntity, TrackerEntity):  # type: ignore[
         self._attr_unique_id = f"{self._id}_location"
 
     @property
-    def location_name(self) -> str | None:  # type: ignore[override]
-        """Return the state of the sensor."""
-        return f"{self._data.address}" if self._data else None
-
-    @property
     def longitude(self) -> float | None:  # type: ignore[override]
         """Return the state of the sensor."""
         return self._data.longitude if self._data else None

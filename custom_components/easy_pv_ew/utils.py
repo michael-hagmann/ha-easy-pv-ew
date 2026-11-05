@@ -7,10 +7,12 @@ managing entities and devices in the Easy PV integration.
 
 from collections.abc import Callable, Iterable
 
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import EasyPVConfigEntry
+from .const import DOMAIN
 from .coordinator import EasyPVCoordinator
 
 type CreateStationEntitiesCallback = Callable[
@@ -22,6 +24,41 @@ type CreateDeviceEntitiesCallback = Callable[
 type CreatePanelEntitiesCallback = Callable[
     [EasyPVCoordinator, str, str, int], Iterable[Entity]
 ]
+
+
+def _register_device_hierarchy(
+    config_entry: EasyPVConfigEntry, coordinator: EasyPVCoordinator
+) -> None:
+    """
+    Register station, inverter and PV input devices with their parent links.
+
+    ``via_device_id`` needs the registry id of an already registered parent.
+    The platforms add their entities independently (the binary sensor platform
+    has no station entity), so the parent device may not exist yet when a
+    child entity is added. Registering the hierarchy here, parents first,
+    makes the links independent of that order. The entities add the details
+    (name, model, firmware) through their device info.
+    """
+    if coordinator.data is None:
+        return
+    dev_reg = dr.async_get(coordinator.hass)
+    entry_id = config_entry.entry_id
+    for station in coordinator.data.values():
+        station_entry = dev_reg.async_get_or_create(
+            config_entry_id=entry_id, identifiers={(DOMAIN, station.entity_id)}
+        )
+        for device in station.devices.values():
+            device_entry = dev_reg.async_get_or_create(
+                config_entry_id=entry_id,
+                identifiers={(DOMAIN, device.entity_id)},
+                via_device_id=station_entry.id,
+            )
+            for panel in device.panels or []:
+                dev_reg.async_get_or_create(
+                    config_entry_id=entry_id,
+                    identifiers={(DOMAIN, panel.entity_id)},
+                    via_device_id=device_entry.id,
+                )
 
 
 async def setup_platform_entry(
@@ -48,6 +85,7 @@ async def setup_platform_entry(
         if not new_devices:
             return
         known_devices.update(new_devices)
+        _register_device_hierarchy(config_entry, coordinator)
 
         new_entities: list[Entity] = []
         for station in coordinator.data.values():
