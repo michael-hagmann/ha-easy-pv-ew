@@ -31,7 +31,7 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 
 `/workspaces/austausch` ist der Transportweg zum claude.ai-Projekt „HA PV Konfiguration“ (Bind-Mount aus `.devcontainer/devcontainer.json`). Remote Control und Nachrichten zwischen Sessions werden nicht genutzt.
 
-- **Regeln** stehen in `/workspaces/austausch/LIESMICH.md`; zu Beginn jeder Session lesen (Skill `session-start`).
+- **Regeln** stehen in `/workspaces/austausch/LIESMICH.md`; zu Beginn jeder Session lesen (Skill `session-start`). Die Datei verwaltet das Projekt (Koordinator); nicht selbst ändern, Änderungswünsche als Meldung nach `an-projekt/`.
 - **`an-code/`:** Dateien aus dem Projekt. Zu Beginn jeder Session nachsehen. Eine neue Fassung von `briefing-ew.md` nach `docs/briefing-ew.md` übernehmen und Michael sagen, was sich geändert hat. Verarbeitete Dateien nach `an-code/erledigt/` verschieben.
 - **`an-projekt/`:** Meldungen an das Projekt, je Meldung eine Datei `JJJJ-MM-TT-HHMM-thema.md`, erste Zeile „EW-Integration:“. Anlässe: Widerspruch oder Lücke im Briefing, Änderung der Cloud-API (Ergebnis von `scripts/check_api`), Entity-IDs für Gesamtertrag und Leistung, getaggtes Release. Danach Michael Bescheid sagen, damit er sie weitergibt.
 - Maßgeblich sind die Dateien im claude.ai-Projekt; der Ordner ist nur Transportweg.
@@ -44,22 +44,22 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 - Vor jedem schreibenden Schritt außerhalb des Repositorys (z. B. Push, Release, Änderungen an einer HA-Instanz) zeigen, was passiert, und auf Michaels OK warten. Änderungen im Repository dürfen ohne Rückfrage erfolgen; Commits mit aussagekräftiger Nachricht.
 - **Nur lesend gegenüber der Cloud.** Die Integration nutzt ausschließlich die Endpunkte für das eigene Konto: Anmeldung (`passLogin`), Benutzerdaten (`selectUserInfo`), Stationsliste (`getStationList`), Geräteliste (`getPowerList`), Gerätedaten (`getDeviceDataInfo`). Nie Gerätebefehle, Leistungsbegrenzung, Firmware-Updates, Einstellungen oder Partner-/Händler-/Verwaltungs-Endpunkte („Open API“, DMP), auch wenn die OpenAPI-Beschreibung sie zeigt.
 - **Abrufintervall nie unter 60 s**, auch nicht als einstellbare Option; keine Abfragen außerhalb des normalen Betriebs.
-- **Die OpenAPI-Beschreibung des Herstellers und ihre Adresse kommen nie ins Repository** (der Fork ist öffentlich, die Beschreibung ist eine interne Unterlage des Herstellers). Sie liegen nur lokal: Fassungen als `local/openapi/easy-pv-JJJJ-MM-TT.json`, die Adresse als `EASYPV_OPENAPI_URL` in `.env.local`. Beides steht in `.gitignore`; vor jedem Commit prüfen, dass nichts aus `local/` und keine `.env.local` gestaged ist. Auch keine Auszüge daraus in Code, Tests, Kommentare oder Commit-Nachrichten, die der Code nicht braucht.
+- **Die OpenAPI-Beschreibung des Herstellers kommt nie ins Repository** (der Fork ist öffentlich, die Beschreibung ist eine interne Unterlage des Herstellers). Fassungen liegen nur lokal als `local/openapi/easy-pv-JJJJ-MM-TT.json` (`local/` und `.env.local` stehen in `.gitignore`); vor jedem Commit prüfen, dass nichts aus `local/` und keine `.env.local` gestaged ist. Auch keine Auszüge daraus in Code, Tests, Kommentare oder Commit-Nachrichten, die der Code nicht braucht. Die **Adresse** der Beschreibung ist kein Geheimnis und steht als `openapi_url` in `tests/api_contract.yaml`.
 - **Die Beschreibung nie automatisch herunterladen**, auch nicht per Skript oder `WebFetch`: Der Server verbietet es per `robots.txt`. Neue Fassungen holt Michael von Hand im Browser.
 - **Referenz für API-Fragen:** Existiert `local/openapi/`, gilt dort die neueste Datei (nach Datum im Namen). Fehlt sie, gilt der Auszug „Schnittstelle laut OpenAPI“ im Briefing. Maßgeblich für den Code ist der Schnittstellenvertrag `tests/api_contract.yaml` (nur, was der Code liest); Abweichungen meldet `scripts/check_api`.
 - Zugangsdaten der Easy-PV-App gibt Michael selbst in HA ein. Nie im Chat erfragen, nie in Code, Tests, Fixtures oder Logs ablegen. Rohantworten für Fixtures anonymisieren (Seriennummern, Standort, Konto).
 - `config/` enthält Laufzeitdaten der Test-Instanz und gehört nicht ins Repository, ausgenommen `config/configuration.yaml`.
-- Entwickelt und getestet wird im Devcontainer gegen die dortige Test-Instanz (siehe „Umgebung“). Die produktive HA-Instanz auf der NAS wird nicht angefasst.
+- Entwickelt und getestet wird im Devcontainer gegen die dortige Test-Instanz (siehe „Umgebung“). Die produktive HA-Instanz wird nicht angefasst.
 - Vor jedem Commit `scripts/lint` und die Tests laufen lassen (Skill `commit`).
 
 ## Umgebung: Devcontainer
 
-Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcontainer.json`), nicht auf Michaels Windows-Rechner. Der Host ist Windows; Docker und die Devcontainer-Werkzeuge laufen direkt in WSL (kein Docker Desktop). `${localEnv:…}` in `devcontainer.json` liest deshalb die WSL-Umgebung.
+Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcontainer.json`), nicht auf dem Host. Der Host ist beliebig, solange er Devcontainer ausführen kann. `${localEnv:…}` in `devcontainer.json` liest die Umgebung des Rechners, auf dem Docker und die Devcontainer-Werkzeuge laufen (bei Docker direkt in WSL also die WSL-Umgebung, nicht die von Windows).
 
 - **Image** `mcr.microsoft.com/devcontainers/python:3.14`, Benutzer `vscode` mit `sudo`. HA 2026.10.4 und die Testabhängigkeiten installiert `scripts/setup` beim Erstellen des Containers (`postCreateCommand`).
-- **Repository** unter `/workspaces/ha-easy-pv-ew` auf einem Container-Volume (ext4), nicht auf einem Windows-Laufwerk.
-- **Kein Zugriff** auf die NAS, das Laufwerk `Z:` oder das Heimnetz, und das ist so gewollt. Ins Internet kommt der Container, die Easy-PV-Cloud ist erreichbar.
-- **Test-Instanz:** HA im Container auf Port 8123, VS Code leitet den Port an den Windows-Rechner weiter.
+- **Repository** unter `/workspaces/ha-easy-pv-ew`, am besten auf einem Container-Volume statt in einem eingebundenen Host-Ordner (deutlich schneller, vor allem unter Windows).
+- **Kein Zugriff** auf die produktive HA-Instanz oder das Heimnetz nötig, und so ist es gewollt. Gebraucht wird nur Internetzugang zur Easy-PV-Cloud.
+- **Test-Instanz:** HA im Container auf Port 8123, VS Code leitet den Port an den Host weiter.
 - **Git push** läuft über den Credential-Helper von VS Code und funktioniert nur, solange VS Code mit dem Container verbunden ist. `gh` ist nicht installiert.
 - **Rebuild** des Containers (nach Änderungen an `devcontainer.json`) verwirft alles außerhalb von `/workspaces` und den Volumes: installierte Pakete, Shell-Verlauf. `~/.claude` (Login, Memories) liegt auf einem eigenen Volume. Ein Rebuild ist ein Schritt außerhalb des Repositorys und braucht Michaels OK; er löst ihn selbst in VS Code aus.
 - **Temporäre Dateien:** `$TMPDIR` ist leer, und das Scratchpad-Verzeichnis der Session existiert anfangs nicht. Vorher `mkdir -p` und prüfen, bevor man sich auf eine Sicherungskopie verlässt. Um alten Code testweise zu prüfen, lieber `git stash` oder `git worktree` statt Kopieren.

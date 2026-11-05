@@ -99,6 +99,13 @@ def test_contract_covers_endpoints_used_by_client() -> None:
     assert client.count('"/api/') == len(paths)
 
 
+def test_openapi_url_belongs_to_the_client_api() -> None:
+    """The documented description lives on the server the client talks to."""
+    from custom_components.easy_pv_ew.easy_pv import BASE_URL  # noqa: PLC0415
+
+    assert CONTRACT["openapi_url"] == f"{BASE_URL}/v3/api-docs"
+
+
 # --- scripts/check_api ---
 
 
@@ -193,6 +200,7 @@ def test_check_api_without_local_copy(tmp_path: Path) -> None:
     result = _run(tmp_path / "missing")
     assert result.returncode == 0
     assert "Keine lokale OpenAPI-Beschreibung" in result.stdout
+    assert CONTRACT["openapi_url"] in result.stdout
 
 
 def test_check_api_matching_spec(tmp_path: Path) -> None:

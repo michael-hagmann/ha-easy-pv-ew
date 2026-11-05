@@ -29,9 +29,9 @@ Nichts davon darf im Diff stehen, auch nicht in Tests, Fixtures, Kommentaren ode
 
 - Easy-PV-Zugangsdaten, echte Tokens (Fixtures verwenden `test-token`)
 - echte Seriennummern, Geräte- oder Stations-IDs, Standort, Adresse, Koordinaten, Kontoname, E-Mail
-- Michaels Windows-Benutzername, Pfade unter `C:\Users\…` oder `/mnt/c/Users/…` (in Beispielen `<Benutzername>`)
+- Benutzernamen und persönliche Pfade des Entwicklungsrechners, z. B. unter `C:\Users\…`, `/mnt/c/Users/…` oder `/home/…` (in Beispielen `<Benutzername>`)
 - Dateien aus `config/` außer `config/configuration.yaml`
-- Dateien aus `local/` (OpenAPI-Beschreibung des Herstellers), `.env.local` oder die Adresse der Beschreibung
+- Dateien aus `local/` (OpenAPI-Beschreibung des Herstellers) oder `.env.local`; die Adresse der Beschreibung darf stehen (`openapi_url` im Vertrag)
 
 Bei Fixtures aus echten Antworten vorher den Skill `fixture-anonymisieren` anwenden.
 

@@ -5,7 +5,7 @@ description: Die Home-Assistant-Test-Instanz im Devcontainer starten, neu starte
 
 # HA-Test-Instanz
 
-Nur die Test-Instanz im Devcontainer. Die produktive Instanz auf der NAS wird nie angefasst.
+Nur die Test-Instanz im Devcontainer. Die produktive Instanz wird nie angefasst.
 
 ## Starten
 

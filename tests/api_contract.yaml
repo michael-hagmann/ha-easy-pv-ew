@@ -26,7 +26,12 @@
 # Antworten; tests/test_validate.py hält es mit diesem Vertrag gleich.
 
 version: 1
-updated: 2026-11-04
+updated: 2026-11-05
+
+# OpenAPI-3-Beschreibung des Herstellers. Nur von Hand im Browser holen (der
+# Server verbietet automatische Abrufe per robots.txt) und als
+# local/openapi/easy-pv-JJJJ-MM-TT.json ablegen; nie ins Repository.
+openapi_url: https://inverter-en.easycharging-tech.com/prod-api/v3/api-docs
 
 envelope: &envelope
   code:

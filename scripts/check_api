@@ -448,20 +448,21 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    contract = yaml.safe_load(args.contract.read_text(encoding="utf-8"))
     copies = local_copies(args.dir) if args.dir.is_dir() else []
     spec_path: Path | None = args.spec or (copies[-1] if copies else None)
     if spec_path is None:
         print(
             f"Keine lokale OpenAPI-Beschreibung in {_show(args.dir)}/ "
             "gefunden; nichts zu prüfen.\nNeue Fassungen von Hand im Browser "
-            "holen und als easy-pv-JJJJ-MM-TT.json dort ablegen."
+            f"holen ({contract.get('openapi_url', 'Adresse siehe Vertrag')}) "
+            "und als easy-pv-JJJJ-MM-TT.json dort ablegen."
         )
         return 0
     if not spec_path.is_file():
         print(f"Datei nicht gefunden: {spec_path}", file=sys.stderr)
         return 2
 
-    contract = yaml.safe_load(args.contract.read_text(encoding="utf-8"))
     spec = Spec(spec_path)
     print(f"Vertrag:      {_show(args.contract)}")
     print(f"Beschreibung: {spec_path.name} ({len(spec.paths)} Pfade)")
