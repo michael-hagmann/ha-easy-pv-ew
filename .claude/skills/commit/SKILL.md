@@ -31,13 +31,13 @@ Nichts davon darf im Diff stehen, auch nicht in Tests, Fixtures, Kommentaren ode
 - echte Seriennummern, Geräte- oder Stations-IDs, Standort, Adresse, Koordinaten, Kontoname, E-Mail
 - Benutzernamen und persönliche Pfade des Entwicklungsrechners, z. B. unter `C:\Users\…`, `/mnt/c/Users/…` oder `/home/…` (in Beispielen `<Benutzername>`)
 - Dateien aus `config/` außer `config/configuration.yaml`
-- Dateien aus `local/` (OpenAPI-Beschreibung des Herstellers) oder `.env.local`; die Adresse der Beschreibung darf stehen (`openapi_url` im Vertrag)
+- Dateien aus `local/` (OpenAPI-Beschreibung, Briefing, Handover, offene Entscheidungen) oder `.env.local`; die Adresse der Beschreibung darf stehen (`openapi_url` im Vertrag)
 
 Bei Fixtures aus echten Antworten vorher den Skill `fixture-anonymisieren` anwenden.
 
 ## 3. Handover
 
-Ändert der Commit den Projektstand (erledigter Punkt, neuer nächster Schritt, neue offene Frage), vorher den Skill `handover-pflegen` anwenden und `docs/HANDOVER.md` mitcommitten. Beim ersten Mal in einer neuen Session archiviert er dabei den Stand der Vorsession.
+Ändert der Commit den Projektstand (erledigter Punkt, neuer nächster Schritt, neue offene Frage), vorher den Skill `handover-pflegen` anwenden. `local/HANDOVER.md` wird nicht mitcommittet. Beim ersten Mal in einer neuen Session archiviert er dabei den Stand der Vorsession.
 
 ## 4. Commit-Nachricht
 

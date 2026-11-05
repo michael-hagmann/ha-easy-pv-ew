@@ -43,4 +43,4 @@ HA lädt Python-Code nicht neu. Prozess beenden und `scripts/develop` neu starte
 - Gibt es in `getDeviceDataInfo` einen Gesamtzähler pro Gerät?
 - Aktualisiert sich der Wert bei jedem Abruf, wie oft ändert die Cloud ihn?
 - Entity-IDs der Sensoren für Gesamtertrag und Leistung notieren (Übergabe an „HA PV Konfiguration“)
-- Zeitpunkt der Einrichtung notieren (Token-Laufzeit, siehe `docs/offene-entscheidungen.md`)
+- Zeitpunkt der Einrichtung notieren (Token-Laufzeit, siehe `local/offene-entscheidungen.md`)

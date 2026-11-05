@@ -16,8 +16,8 @@ Für jede Erkenntnis der Session entscheiden, wohin sie gehört:
 | Projektregel, Konvention, Fallstrick im Code | `CLAUDE.md` |
 | Wiederkehrender Ablauf mit mehreren Schritten | Skill unter `.claude/skills/<name>/SKILL.md` (neu oder bestehenden ergänzen; neue Skills in `CLAUDE.md` auflisten) |
 | Michaels Arbeitsweise und Vorlieben | Memory (`~/.claude/projects/-workspaces-ha-easy-pv-ew/memory/`, Index `MEMORY.md`) |
-| Entscheidung, die Michael treffen muss oder getroffen hat | `docs/offene-entscheidungen.md` (Hintergrund, Optionen, Empfehlung, Zeitpunkt; Getroffenes mit Datum unter „Entschieden“) |
-| Nur für die nächste Session relevant | `docs/HANDOVER.md` |
+| Entscheidung, die Michael treffen muss oder getroffen hat | `local/offene-entscheidungen.md` (Hintergrund, Optionen, Empfehlung, Zeitpunkt; Getroffenes mit Datum unter „Entschieden“) |
+| Nur für die nächste Session relevant | `local/HANDOVER.md` |
 
 Bestehende Einträge aktualisieren statt duplizieren, Überholtes löschen.
 
@@ -27,7 +27,7 @@ Skill `handover-pflegen` anwenden und dabei das ganze Handover mit der Relevanzf
 
 ## 3. Commit
 
-Mit dem Skill `commit`. Nicht pushen, außer Michael gibt das OK.
+Mit dem Skill `commit` (Handover und offene Entscheidungen liegen in `local/` und werden nicht mitcommittet). Nicht pushen, außer Michael gibt das OK.
 
 ## 4. Abschlussmeldung an Michael
 

@@ -2,21 +2,32 @@
 
 Home-Assistant-Integration für den Balkonkraftwerk-Wechselrichter Electronic Way (EW) VN2T08EU über die Easy-PV-Cloud.
 
-**Auftrag, Anforderungen und Ablauf: `docs/briefing-ew.md`** (wird unten importiert und damit in jeder Session geladen).
+**Auftrag, Anforderungen und Ablauf: `local/briefing-ew.md`** (wird unten importiert und damit in jeder Session geladen).
 
-- Das Briefing im Repository ist eine **Kopie**. Die führende Fassung liegt im claude.ai-Projekt „HA PV Konfiguration“ (`claude/ew-integration-briefing.md`); Michael erneuert die Kopie bei Änderungen. Die Kopie nicht selbst inhaltlich ändern, sondern Änderungswünsche an Michael melden.
+- Das Briefing ist eine **lokale Kopie** und nicht eingecheckt. Die führende Fassung liegt im claude.ai-Projekt „HA PV Konfiguration“ (`claude/ew-integration-briefing.md`) und kommt über den Austauschordner. Die Kopie nicht selbst inhaltlich ändern, sondern Änderungswünsche als Meldung nach `an-projekt/`.
 - Bei Widersprüchen zwischen dieser Datei und dem Briefing: bei Michael nachfragen, nicht selbst auflösen.
 
-@docs/briefing-ew.md
+@local/briefing-ew.md
+
+## Projektunterlagen nur lokal
+
+Briefing, Handover und offene Entscheidungen betreffen Michaels Entwicklungsstand und kommen **nicht ins öffentliche Repository**. Sie liegen in `local/` (in `.gitignore`, im Container-Volume, übersteht einen Rebuild):
+
+- `local/briefing-ew.md`: Kopie des Briefings
+- `local/HANDOVER.md`: Übergabe an die nächste Session
+- `local/handover-archiv/`: Endstände früherer Sessions
+- `local/offene-entscheidungen.md`: Entscheidungen, die Michael noch treffen muss, und getroffene
+
+Git sichert und versioniert diese Dateien nicht. Fehlt eine davon (neues Volume, frischer Klon), Michael Bescheid sagen; das Briefing kommt aus dem claude.ai-Projekt bzw. `austausch/an-code/erledigt/`. Ältere Fassungen bis 04.11.2026 liegen noch unter `docs/` in der öffentlichen Git-Historie; das ist bekannt und so gewollt.
 
 ## Arbeit über mehrere Sessions
 
 Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 
-- **Zu Beginn jeder Session** den Skill `session-start` anwenden, bevor an Code gearbeitet wird: Memories, `docs/HANDOVER.md`, `docs/offene-entscheidungen.md` und Git-Log lesen, abgleichen, Session-Kennung festlegen.
-- **Während der Session** das Handover laufend pflegen (Skill `handover-pflegen`, bei jedem Commit über `commit`), damit es auch bei einem unerwarteten Ende aktuell ist. Bei der ersten Änderung in einer neuen Session wird der Stand der Vorsession nach `docs/handover-archiv/` archiviert. Das Handover enthält nur, was die nächste Session braucht.
+- **Zu Beginn jeder Session** den Skill `session-start` anwenden, bevor an Code gearbeitet wird: Memories, `local/HANDOVER.md`, `local/offene-entscheidungen.md` und Git-Log lesen, abgleichen, Session-Kennung festlegen.
+- **Während der Session** das Handover laufend pflegen (Skill `handover-pflegen`, bei jedem Commit über `commit`; es wird nicht mitcommittet), damit es auch bei einem unerwarteten Ende aktuell ist. Bei der ersten Änderung in einer neuen Session wird der Stand der Vorsession nach `local/handover-archiv/` archiviert. Das Handover enthält nur, was die nächste Session braucht.
 - **Am Ende einer Session** oder bei vollem Kontext den Skill `session-ende` anwenden, um Wissen einzuordnen und das Handover aufzuräumen.
-- Dauerhaftes Wissen gehört ins Repository (diese Datei, Handover, Skills), nicht nur in Memories. `~/.claude` liegt erst seit dem Volume in `.devcontainer/devcontainer.json` außerhalb des Containers.
+- Dauerhaftes Wissen gehört in diese Datei, die Skills oder die lokalen Projektunterlagen, nicht nur in Memories. `~/.claude` liegt erst seit dem Volume in `.devcontainer/devcontainer.json` außerhalb des Containers.
 - Wiederkehrende Abläufe als Skill unter `.claude/skills/` ablegen. Vorhanden:
   - `session-start`: Einstieg in eine Session, Stand abgleichen und berichten
   - `commit`: Lint, Tests, Prüfung auf vertrauliche Daten, Commit-Nachricht
@@ -25,14 +36,14 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
   - `ha-testinstanz`: Test-Instanz starten, Log auswerten (Schritt 7)
   - `fixture-anonymisieren`: echte API-Antworten in Fixtures überführen (Schritt 7)
 - Ein Agent für Planung, Implementierung und Tests; vor dem Release ein `/code-review` über den gesamten Diff.
-- Entscheidungsfragen an Michael mit Hintergrund stellen: Ist-Zustand, Problem, Optionen mit Vor- und Nachteilen, Empfehlung. Offene Entscheidungen in `docs/offene-entscheidungen.md` festhalten statt sie nur im Chat zu stellen.
+- Entscheidungsfragen an Michael mit Hintergrund stellen: Ist-Zustand, Problem, Optionen mit Vor- und Nachteilen, Empfehlung. Offene Entscheidungen in `local/offene-entscheidungen.md` festhalten statt sie nur im Chat zu stellen.
 
 ## Austauschordner
 
 `/workspaces/austausch` ist der Transportweg zum claude.ai-Projekt „HA PV Konfiguration“ (Bind-Mount aus `.devcontainer/devcontainer.json`). Remote Control und Nachrichten zwischen Sessions werden nicht genutzt.
 
 - **Regeln** stehen in `/workspaces/austausch/LIESMICH.md`; zu Beginn jeder Session lesen (Skill `session-start`). Die Datei verwaltet das Projekt (Koordinator); nicht selbst ändern, Änderungswünsche als Meldung nach `an-projekt/`.
-- **`an-code/`:** Dateien aus dem Projekt. Zu Beginn jeder Session nachsehen. Eine neue Fassung von `briefing-ew.md` nach `docs/briefing-ew.md` übernehmen und Michael sagen, was sich geändert hat. Verarbeitete Dateien nach `an-code/erledigt/` verschieben.
+- **`an-code/`:** Dateien aus dem Projekt. Zu Beginn jeder Session nachsehen. Eine neue Fassung von `briefing-ew.md` nach `local/briefing-ew.md` übernehmen und Michael sagen, was sich geändert hat. Verarbeitete Dateien nach `an-code/erledigt/` verschieben.
 - **`an-projekt/`:** Meldungen an das Projekt, je Meldung eine Datei `JJJJ-MM-TT-HHMM-thema.md`, erste Zeile „EW-Integration:“. Anlässe: Widerspruch oder Lücke im Briefing, Änderung der Cloud-API (Ergebnis von `scripts/check_api`), Entity-IDs für Gesamtertrag und Leistung, getaggtes Release. Danach Michael Bescheid sagen, damit er sie weitergibt.
 - Maßgeblich sind die Dateien im claude.ai-Projekt; der Ordner ist nur Transportweg.
 - Keine Zugangsdaten, keine Inhalte aus `local/` oder `.env.local`, keine Auszüge aus der Herstellerbeschreibung über das Briefing hinaus.

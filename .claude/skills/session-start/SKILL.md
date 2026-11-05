@@ -10,8 +10,8 @@ Die neue Session kennt nur, was im Repository und in den Memories steht. Erst le
 ## 1. Lesen
 
 1. **Memories:** Das Verzeichnis `~/.claude/projects/-workspaces-ha-easy-pv-ew/memory/` mit `MEMORY.md` und den verlinkten Dateien. Ist es leer (z. B. nach einem Rebuild ohne Volume), das im Bericht erwähnen; die Arbeitsregeln stehen auch in `CLAUDE.md`.
-2. **Handover:** `docs/HANDOVER.md`, vollständig.
-3. **Offene Entscheidungen:** `docs/offene-entscheidungen.md`.
+2. **Handover:** `local/HANDOVER.md`, vollständig.
+3. **Offene Entscheidungen:** `local/offene-entscheidungen.md`.
 3a. **Austauschordner** (siehe `CLAUDE.md`, „Austauschordner“): `/workspaces/austausch/LIESMICH.md` lesen und `an-code/` ansehen. Neue Dateien nach den Regeln dort abarbeiten (Briefing übernehmen und Änderungen nennen, danach nach `an-code/erledigt/` verschieben). Fehlt der Ordner, fehlt der Mount; das im Bericht nennen.
 4. **Git-Stand:**
 
@@ -22,17 +22,17 @@ Die neue Session kennt nur, was im Repository und in den Memories steht. Erst le
    git stash list
    ```
 
-5. Das Briefing (`docs/briefing-ew.md`) wird über `CLAUDE.md` automatisch geladen. Hat es sich seit dem letzten Handover geändert (`git log -1 --format=%ci -- docs/briefing-ew.md` oder uncommittete Änderung), mit Handover und Code abgleichen und Widersprüche im Bericht nennen.
+5. Das Briefing (`local/briefing-ew.md`) wird über `CLAUDE.md` automatisch geladen. **Fehlt eine der Dateien in `local/`** (Briefing, Handover, offene Entscheidungen), ist das der erste Punkt im Bericht: Sie sind nicht eingecheckt (siehe `CLAUDE.md`, „Projektunterlagen nur lokal“). Ist das Briefing neuer als das Handover (`ls -l --time-style=+%F_%H%M local/*.md`), mit Handover und Code abgleichen und Widersprüche im Bericht nennen.
 
 ## 2. Abgleichen
 
-- **Handover gegen Git:** Commits nach der letzten Änderung des Handovers bedeuten, dass es veraltet ist:
+- **Handover gegen Git:** Das Handover ist nicht eingecheckt und wird vor jedem Commit gepflegt. Commits nach seiner letzten Änderung bedeuten, dass es veraltet ist:
 
   ```bash
-  git log --oneline "$(git log -1 --format=%H -- docs/HANDOVER.md)"..HEAD
+  git log --oneline --since="$(date -r local/HANDOVER.md --iso-8601=seconds)"
   ```
 
-  Ist die Ausgabe nicht leer, Michael darauf hinweisen und aus den Commit-Nachrichten den tatsächlichen Stand ableiten. Uncommittete Änderungen an `docs/HANDOVER.md` sind der neueste Stand der Vorsession und gelten.
+  Ist die Ausgabe nicht leer, Michael darauf hinweisen und aus den Commit-Nachrichten den tatsächlichen Stand ableiten. Zur Kontrolle dient auch `**Aktualisiert:**` im Kopf des Handovers.
 - **Arbeitsverzeichnis:** Uncommittete Änderungen oder Stashes bedeuten halbfertige Arbeit aus der letzten Session. Nicht verwerfen, im Bericht nennen.
 - **Umgebung, kurz:** `python --version` (erwartet 3.14) und `scripts/test` (läuft schnell). Scheitert etwas, ist das der erste Punkt im Bericht.
 

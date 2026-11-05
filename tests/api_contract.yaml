@@ -3,7 +3,7 @@
 # Eigene Beschreibung dessen, was die Integration tatsächlich nutzt: je
 # Endpunkt Methode, Pfad, Parameter und die Antwortfelder, die der Code liest,
 # mit Typ und erwarteter Einheit. Keine Kopie der Herstellerbeschreibung.
-# Grundlage: Auszug „Schnittstelle laut OpenAPI“ in docs/briefing-ew.md.
+# Grundlage: Auszug „Schnittstelle laut OpenAPI“ im Briefing des Projekts.
 #
 # Gepflegt zusammen mit dem Code (custom_components/easy_pv_ew/easy_pv/ und
 # coordinator.py). scripts/check_api vergleicht ihn mit der neuesten lokalen
