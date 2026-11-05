@@ -54,7 +54,7 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 
 ## Umgebung: Devcontainer
 
-Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcontainer.json`), nicht auf Michaels Windows-Rechner. Der Host ist Windows mit Docker Desktop (WSL2).
+Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcontainer.json`), nicht auf Michaels Windows-Rechner. Der Host ist Windows; Docker und die Devcontainer-Werkzeuge laufen direkt in WSL (kein Docker Desktop). `${localEnv:…}` in `devcontainer.json` liest deshalb die WSL-Umgebung.
 
 - **Image** `mcr.microsoft.com/devcontainers/python:3.14`, Benutzer `vscode` mit `sudo`. HA 2026.10.4 und die Testabhängigkeiten installiert `scripts/setup` beim Erstellen des Containers (`postCreateCommand`).
 - **Repository** unter `/workspaces/ha-easy-pv-ew` auf einem Container-Volume (ext4), nicht auf einem Windows-Laufwerk.
