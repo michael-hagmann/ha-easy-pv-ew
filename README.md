@@ -71,7 +71,7 @@ One device is created per station, per inverter and per PV input (MPPT), linked 
 | --- | --- |
 | Station | Power (W), energy today, lifetime energy (kWh); location (diagnostic) |
 | Inverter | Power (W), energy today, energy this month, lifetime energy (kWh), grid voltage (V); online, fault, firmware versions (diagnostic) |
-| PV input | Power (W), voltage (V), current (A); temperature, grid frequency (diagnostic, not reported by every inverter) |
+| PV input | Power (W), voltage (V), current (A); temperature, grid frequency (diagnostic, disabled by default: the VN2T08EU does not report them) |
 
 Energy sensors use `state_class: total_increasing` and power, voltage and current use `measurement`, so all of them have long-term statistics. Both lifetime energy sensors suit the Energy dashboard (*Solar production*). The inverter counts since it was last registered in the Easy PV app; the station counts since the station was created and continues after a new registration of the inverter.
 

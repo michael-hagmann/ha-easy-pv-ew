@@ -201,7 +201,7 @@ async def test_device_total_invalid_keeps_value(
 # --- Verfügbarkeit über status (Fehler 6) ---
 
 
-@pytest.mark.usefixtures("setup_integration")
+@pytest.mark.usefixtures("enable_all_entities", "setup_integration")
 async def test_online_status(hass: HomeAssistant) -> None:
     """Status 1: online, no fault, all sensors available."""
     assert _binary_state(hass, f"{DEVICE}_online") == STATE_ON
@@ -211,7 +211,7 @@ async def test_online_status(hass: HomeAssistant) -> None:
 
 
 @pytest.mark.parametrize(("status", "fault"), [(2, STATE_OFF), (3, STATE_ON)])
-@pytest.mark.usefixtures("setup_integration")
+@pytest.mark.usefixtures("enable_all_entities", "setup_integration")
 async def test_offline_or_fault_hides_live_values(
     hass: HomeAssistant,
     aioclient_mock: AiohttpClientMocker,

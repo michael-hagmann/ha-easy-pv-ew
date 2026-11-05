@@ -13,9 +13,11 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 import pytest
-from homeassistant.const import STATE_UNAVAILABLE
+from homeassistant.const import STATE_UNAVAILABLE, Platform
+from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
+from custom_components.easy_pv_ew.const import DOMAIN
 from custom_components.easy_pv_ew.easy_pv.redact import redact
 
 from .conftest import (
@@ -119,7 +121,7 @@ async def test_real_values(hass: HomeAssistant, unique_id: str, value: str) -> N
 
 
 @pytest.mark.parametrize("key", ["temperature", "frequency"])
-@pytest.mark.usefixtures("setup_real")
+@pytest.mark.usefixtures("enable_all_entities", "setup_real")
 async def test_real_null_values_unavailable(hass: HomeAssistant, key: str) -> None:
     """The cloud sends null for temperature and frequency: unavailable, not 0."""
     assert sensor_state(hass, f"{PANEL_1}_{key}").state == STATE_UNAVAILABLE
@@ -156,3 +158,20 @@ def test_real_fixture_redacted_completely(name: str) -> None:
         "'8.0'",
     ):
         assert placeholder not in text, f"{placeholder} in {name}"
+
+
+@pytest.mark.parametrize("key", ["temperature", "frequency"])
+@pytest.mark.usefixtures("setup_real")
+async def test_temperature_frequency_disabled_by_default(
+    hass: HomeAssistant, key: str
+) -> None:
+    """The VN2T08EU never reports them: registered, but disabled by default."""
+    registry = er.async_get(hass)
+    entity_id = registry.async_get_entity_id(
+        Platform.SENSOR, DOMAIN, f"{PANEL_1}_{key}"
+    )
+    assert entity_id
+    entry = registry.async_get(entity_id)
+    assert entry is not None
+    assert entry.disabled_by is er.RegistryEntryDisabler.INTEGRATION
+    assert hass.states.get(entity_id) is None

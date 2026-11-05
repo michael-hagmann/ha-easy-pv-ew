@@ -169,7 +169,7 @@ def test_lists_are_checked(caplog: pytest.LogCaptureFixture) -> None:
 # --- Effect on the entities ---
 
 
-@pytest.mark.usefixtures("setup_integration")
+@pytest.mark.usefixtures("enable_all_entities", "setup_integration")
 async def test_implausible_value_makes_entity_unavailable(
     hass: HomeAssistant,
     aioclient_mock: AiohttpClientMocker,

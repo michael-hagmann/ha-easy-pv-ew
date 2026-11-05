@@ -49,7 +49,7 @@ PANEL_1 = "1001_2001_panel_1"
         (f"{PANEL_1}_frequency", "49.98", "frequency", "measurement", "Hz"),
     ],
 )
-@pytest.mark.usefixtures("setup_integration")
+@pytest.mark.usefixtures("enable_all_entities", "setup_integration")
 async def test_sensor_states(
     hass: HomeAssistant,
     unique_id: str,

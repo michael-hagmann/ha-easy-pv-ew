@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+from unittest.mock import PropertyMock, patch
 
 import pytest
 from homeassistant.const import Platform
@@ -15,6 +16,8 @@ from custom_components.easy_pv_ew.const import DOMAIN
 from custom_components.easy_pv_ew.easy_pv import BASE_URL
 
 if TYPE_CHECKING:
+    from collections.abc import Generator
+
     from homeassistant.core import HomeAssistant, State
     from pytest_homeassistant_custom_component.test_util.aiohttp import (
         AiohttpClientMocker,
@@ -93,6 +96,17 @@ def sensor_state(hass: HomeAssistant, unique_id: str) -> State:
     state = hass.states.get(sensor_entity_id(hass, unique_id))
     assert state is not None
     return state
+
+
+@pytest.fixture
+def enable_all_entities() -> Generator[None]:
+    """Enable entities that are disabled by default (as in HA core tests)."""
+    with patch(
+        "homeassistant.helpers.entity.Entity.entity_registry_enabled_default",
+        new_callable=PropertyMock,
+        return_value=True,
+    ):
+        yield
 
 
 @pytest.fixture

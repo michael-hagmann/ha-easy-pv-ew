@@ -180,6 +180,8 @@ PANEL_SENSORS: tuple[EasyPVSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         entity_category=EntityCategory.DIAGNOSTIC,
+        # The VN2T08EU sends null; enable manually if an inverter reports it.
+        entity_registry_enabled_default=False,
         requires_online=True,
         value_fn=_panel(lambda panel: panel.temperature),
     ),
@@ -189,6 +191,8 @@ PANEL_SENSORS: tuple[EasyPVSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
         entity_category=EntityCategory.DIAGNOSTIC,
+        # The VN2T08EU sends null; enable manually if an inverter reports it.
+        entity_registry_enabled_default=False,
         requires_online=True,
         value_fn=_panel(lambda panel: panel.frequency),
     ),
