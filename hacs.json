@@ -2,6 +2,7 @@
   "name": "Easy PV (EW)",
   "hacs": "1.6.0",
   "domains": [
+    "binary_sensor",
     "sensor",
     "device_tracker"
   ],
