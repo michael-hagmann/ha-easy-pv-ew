@@ -73,6 +73,8 @@ Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcon
 - **Test-Instanz:** HA im Container auf Port 8123, VS Code leitet den Port an den Host weiter.
 - **Git push** läuft über den Credential-Helper von VS Code und funktioniert nur, solange VS Code mit dem Container verbunden ist. `gh` ist nicht installiert.
 - **Rebuild** des Containers (nach Änderungen an `devcontainer.json`) verwirft alles außerhalb von `/workspaces` und den Volumes: installierte Pakete, Shell-Verlauf. `~/.claude` (Login, Memories) liegt auf einem eigenen Volume. Ein Rebuild ist ein Schritt außerhalb des Repositorys und braucht Michaels OK; er löst ihn selbst in VS Code aus.
+- **Cloud-Adresse und DNS:** `inverter-en.easycharging-tech.com` ist ein CNAME auf ein CDN (Alibaba, `*.w.cdngslb.com`), dessen Adressen nur 60 s gelten. Die geteilte HA-Session hält DNS-Cache und Verbindung kürzer, also wird bei jedem Abruf neu aufgelöst. Gelegentliche DNS- oder Verbindungs-Timeouts sind deshalb zu erwarten und kein Fehler der Integration.
+- **Nicht installiert:** `bc`, `sqlite3`, `dig`. Stattdessen Python (`sqlite3`-Modul, `aiodns` für DNS-Abfragen; dafür ohne `-I` aus einem neutralen Verzeichnis starten, weil die Pakete im Benutzer-Site-Verzeichnis liegen).
 - **Temporäre Dateien:** `$TMPDIR` ist leer, und das Scratchpad-Verzeichnis der Session existiert anfangs nicht. Vorher `mkdir -p` und prüfen, bevor man sich auf eine Sicherungskopie verlässt. Um alten Code testweise zu prüfen, lieber `git stash` oder `git worktree` statt Kopieren.
 
 ## Befehle

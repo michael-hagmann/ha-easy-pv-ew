@@ -30,7 +30,7 @@ HA lädt Python-Code nicht neu. Prozess beenden (`pkill -f "hass --config"`; der
 - Datei: `config/home-assistant.log`; der Logger `custom_components.easy_pv_ew` steht auf `debug`. Beim Neustart wird das alte Log zu `home-assistant.log.1`, eine vorhandene `.log.1` geht dabei verloren; für Zeitreihen beide lesen und vor einem Neustart auswerten oder sichern.
 - Zeiten im Log sind **UTC** (der Container rechnet in UTC, Michael in MEZ/MESZ).
 - Die Rohantworten stehen als Python-Dict hinter `Response GET <pfad>: `; auswerten mit `ast.literal_eval`, nicht mit `json`.
-- Was HA tatsächlich anzeigt, steht in der Datenbank: `sqlite3` auf `config/home-assistant_v2.db` nur lesend (`?mode=ro`), Tabellen `states` und `states_meta`. Entity-IDs des Geräts enthalten den `productCode`-Zusatz; vor der Ausgabe im Chat ersetzen.
+- Was HA tatsächlich anzeigt, steht in der Datenbank `config/home-assistant_v2.db`, nur lesend öffnen (Python: `sqlite3.connect("file:config/home-assistant_v2.db?mode=ro", uri=True)`; das Programm `sqlite3` ist nicht installiert), Tabellen `states` und `states_meta`. Entity-IDs des Geräts enthalten den `productCode`-Zusatz; vor der Ausgabe im Chat ersetzen.
 - Gezielt filtern statt das ganze Log auszugeben, z. B.:
 
   ```bash
@@ -38,6 +38,8 @@ HA lädt Python-Code nicht neu. Prozess beenden (`pkill -f "hass --config"`; der
   grep -n -i -E 'error|exception|traceback' config/home-assistant.log | tail -30
   ```
 
+- Aussetzer: Die Zeile „Update failed, keeping last values: <Fehlertyp>: …“ steht nach der Zeile `Request GET <Pfad>` der hängenden Anfrage. Gelegentliche DNS- und Verbindungs-Timeouts, meist an der ersten Anfrage eines Abrufs, sind in der Test-Instanz normal (siehe `CLAUDE.md`, „Umgebung“); die 5-Minuten-Überbrückung fängt sie ab.
+- Vor einem Neustart `config/home-assistant.log` nach `local/logs/` kopieren. Auswerteskripte (nicht eingecheckt, falls vorhanden) liegen in `local/tools/`.
 - Das Log kann Kontodaten enthalten. Vor dem Zitieren im Chat Seriennummern, IDs, Ort und Konto unkenntlich machen. Für Fixtures den Skill `fixture-anonymisieren` verwenden.
 
 ## Prüfen für Schritt 7
