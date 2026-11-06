@@ -28,7 +28,7 @@
 # Antworten; tests/test_validate.py hält es mit diesem Vertrag gleich.
 
 version: 1
-updated: 2026-11-05
+updated: 2026-11-06
 
 # OpenAPI-3-Beschreibung des Herstellers. Nur von Hand im Browser holen (der
 # Server verbietet automatische Abrufe per robots.txt) und als
@@ -128,6 +128,14 @@ endpoints:
         type: string
         optional: true
         note: 1 online, 2 offline, 3 im Anschluss
+      data.rows[].timeZone:
+        type: string
+        optional: true
+        verified: true
+        note: >-
+          Zeitzone der Station als Abstand zu UTC in Stunden ("+0"). Die Cloud
+          setzt Tages- und Monatsertrag um Mitternacht dieser Zeitzone zurück
+          (beobachtet 06.11.2026: 00:00 UTC bei "+0").
 
   device_list:
     method: GET

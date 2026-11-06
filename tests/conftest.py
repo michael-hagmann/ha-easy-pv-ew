@@ -51,6 +51,7 @@ def register_api(
     device_data: dict[str, Any] | None = None,
     device_text: str | None = None,
     power_list: dict[str, Any] | None = None,
+    stations: dict[str, Any] | None = None,
 ) -> None:
     """
     Replace all registered responses with successful ones.
@@ -59,10 +60,12 @@ def register_api(
     ``device_total`` ``genPowerTotal`` of the inverter (kWh) and
     ``device_status`` its ``status``; ``device_data`` replaces the whole
     getDeviceDataInfo response, ``device_text`` sends it as raw text (e.g.
-    broken JSON) and ``power_list`` replaces the getPowerList response.
+    broken JSON), ``power_list`` replaces the getPowerList response and
+    ``stations`` the getStationList response.
     """
     aioclient_mock.clear_requests()
-    stations = load_fixture("station_list.json")
+    if stations is None:
+        stations = load_fixture("station_list.json")
     if energy_total is not None:
         stations["data"]["rows"][0]["powerTotals"] = energy_total
     if device_data is None:

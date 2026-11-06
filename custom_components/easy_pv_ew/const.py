@@ -16,9 +16,14 @@ PLATFORMS: list[Platform] = [
 STALE_DATA_GRACE = timedelta(minutes=5)
 
 # The lifetime energy never goes backwards: a lower value from the cloud is
-# ignored. Only if the cloud keeps reporting a lower (non-zero) value for this
-# long is it accepted as a real reset (e.g. counter reset by the manufacturer,
-# corrected unit); otherwise the sensor would be stuck forever.
+# ignored. The station total is never reset (it keeps counting when the
+# inverter is registered again); every night around midnight the cloud reports
+# it briefly lower and then 0.01 kWh below the previous value until the next
+# yield. A warning is logged only if the lower value lasts this long.
+TOTAL_LOWER_WARN_AFTER = timedelta(days=1)
+# The inverter total really falls to 0 when the inverter is registered again
+# in the app. A lower (non-zero) value that the cloud keeps reporting for this
+# long is accepted as such a reset; otherwise the sensor would be stuck.
 TOTAL_RESET_AFTER = timedelta(hours=6)
 
 # Options

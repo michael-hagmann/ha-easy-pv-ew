@@ -50,6 +50,7 @@ STATION_LIST: dict[str, Field] = {
     "[].todayPowerTotals": _measurement(0, 10_000),
     "[].powerTotals": _measurement(0, 10_000_000),
     "[].status": Field("string", loggable=True),
+    "[].timeZone": Field("string"),
 }
 
 DEVICE_LIST: dict[str, Field] = {

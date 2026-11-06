@@ -17,9 +17,15 @@ class EasyPVEntity[T](CoordinatorEntity[EasyPVCoordinator]):
     while the cloud reports the station or inverter offline or faulty, their
     last values are stale and the entity is unavailable. Energy counters stay
     available, their values remain valid.
+
+    Power sensors also set ``_zero_when_offline``: the inverter switches off
+    every night, and while the cloud explicitly reports it offline (status 2)
+    they show 0 W instead of being unavailable. A fault or a cloud outage
+    still makes them unavailable.
     """
 
     _requires_online = False
+    _zero_when_offline = False
 
     def __init__(self, coordinator: EasyPVCoordinator) -> None:
         """Initialize the sensor."""
@@ -33,6 +39,16 @@ class EasyPVEntity[T](CoordinatorEntity[EasyPVCoordinator]):
     def _is_online(self) -> bool:
         """Return False if the cloud reports the source offline."""
         return True
+
+    @property
+    def _is_offline(self) -> bool:
+        """Return True only if the cloud explicitly reports the source offline."""
+        return False
+
+    @property
+    def _shows_zero(self) -> bool:
+        """Return True if the sensor shows 0 because the source is offline."""
+        return self._zero_when_offline and self._is_offline
 
     @property
     def _id(self) -> str | None:
@@ -66,12 +82,12 @@ class EasyPVEntity[T](CoordinatorEntity[EasyPVCoordinator]):
         The coordinator bridges short cloud outages itself (STALE_DATA_GRACE),
         so a failed update here means the outage lasted longer.
         """
-        return (
-            super().available
-            and self.coordinator.is_logged_in
-            and self._data is not None
-            and (not self._requires_online or self._is_online)
-        )
+        if not (super().available and self.coordinator.is_logged_in):
+            return False
+        if self._shows_zero:
+            # At night the inverter may send no inputs at all; still 0 W.
+            return True
+        return self._data is not None and (not self._requires_online or self._is_online)
 
     def _handle_update(self) -> None:
         pass
@@ -93,6 +109,11 @@ class EasyPVStationEntity(EasyPVEntity[PVStation]):
     def _is_online(self) -> bool:
         station = self._data
         return station is not None and station.is_online
+
+    @property
+    def _is_offline(self) -> bool:
+        station = self._data
+        return station is not None and station.is_offline
 
     def __init__(
         self,
@@ -116,6 +137,11 @@ class EasyPVDeviceEntity(EasyPVEntity[PVDevice]):
     def _is_online(self) -> bool:
         device = self._data
         return device is not None and device.is_online
+
+    @property
+    def _is_offline(self) -> bool:
+        device = self._data
+        return device is not None and device.is_offline
 
     @property
     def _device_info(self) -> DeviceInfo | None:
@@ -155,6 +181,11 @@ class EasyPVPanelEntity(EasyPVEntity[PVPanel]):
     def _is_online(self) -> bool:
         device = self.coordinator.get_device(self._station_id, self._device_id)
         return device is not None and device.is_online
+
+    @property
+    def _is_offline(self) -> bool:
+        device = self.coordinator.get_device(self._station_id, self._device_id)
+        return device is not None and device.is_offline
 
     @property
     def _device_info(self) -> DeviceInfo | None:

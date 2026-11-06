@@ -2,6 +2,7 @@
 
 import logging
 import math
+import re
 from asyncio import timeout
 from datetime import datetime, timedelta
 from typing import Any
@@ -215,6 +216,7 @@ def _parse_station(station: dict[str, Any]) -> PVStation:
         energy_today=_number(station.get("todayPowerTotals")),
         energy_total=_number(station.get("powerTotals")),
         status=_status(station.get("status")),
+        utc_offset=_utc_offset(station.get("timeZone")),
         devices={},
     )
 
@@ -290,3 +292,23 @@ def _status(value: Any) -> int | None:
     """Return the status code, or None if missing or not a number."""
     number = _number(value)
     return None if number is None else int(number)
+
+
+_UTC_OFFSET = re.compile(r"([+-])(\d{1,2})(?::?(\d{2}))?")
+
+
+def _utc_offset(value: Any) -> timedelta | None:
+    """Return the station time zone ("+0", "+1", "-5:30") as offset from UTC."""
+    if not isinstance(value, str | int) or isinstance(value, bool):
+        return None
+    text = str(value).strip()
+    if text and text[0] not in "+-":
+        text = f"+{text}"
+    match = _UTC_OFFSET.fullmatch(text)
+    if match is None:
+        return None
+    sign, hours, minutes = match.groups()
+    offset = timedelta(hours=int(hours), minutes=int(minutes or 0))
+    if offset > timedelta(hours=14):
+        return None
+    return -offset if sign == "-" else offset

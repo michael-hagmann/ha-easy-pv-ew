@@ -44,7 +44,7 @@ HA lädt Python-Code nicht neu. Prozess beenden (`pkill -f "hass --config"`; der
 
 Geprüft am 05.11.2026: Einheiten (alles kWh bzw. W), Gesamtzähler je Gerät und Station, Takt (Leistung jede Minute, Zähler etwa alle 5 Minuten in Schritten von 0,01 kWh). Weiter beobachten:
 
-- Verhalten nachts (offline? leere Eingänge?) und Tageswechsel von `genpowerTodayTotals`/`todayPowerTotals`
-- kleinere Werte beim Gesamtzähler (Warnung „lower total energy“)
+- Nacht und Tageswechsel (erste Nacht 05./06.11.2026 ausgewertet, siehe `CLAUDE.md`, „Schnittstelle zum Energie-Setup“): weiter auf Abweichungen achten, z. B. Monatswechsel am 01.12.
+- kleinere Werte bei den Zählern: Debug „Cloud reports a lower energy_total/energy_month“; Warnung erst, wenn der Stationszähler einen Tag lang kleiner ist oder der Gerätezähler nach 6 Stunden übernommen wird
 - Token-Ablauf (Einrichtung 05.11.2026 11:18 UTC, siehe `local/offene-entscheidungen.md`)
 - Entity-IDs der Sensoren für Gesamtertrag und Leistung notieren (Übergabe an „HA PV Konfiguration“)

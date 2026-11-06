@@ -53,6 +53,8 @@ LIVE = [
     f"{PANEL_1}_temperature",
     f"{PANEL_1}_frequency",
 ]
+# Power shows 0 W while the cloud reports the inverter offline (at night).
+POWER = ["1001_power", f"{DEVICE}_power", f"{PANEL_1}_power"]
 # Energy counters and firmware: still valid while offline.
 COUNTERS = [
     "1001_energy_total",
@@ -107,18 +109,19 @@ async def test_device_energy_is_kwh_not_wh(
     Energy of getDeviceDataInfo is kWh, despite "Wh" in the OpenAPI description.
 
     Values as seen on 05.11.2026: the device reported 0.025 for today while the
-    station reported 0.03 kWh; read as Wh, HA showed 0.00 kWh.
+    station reported 0.03 kWh; read as Wh, HA showed 0.00 kWh. The month
+    value stays above the fixture (8.5), a lower one would be ignored.
     """
     data = load_fixture("device_data.json")
     data["data"].update(
-        genPowerTotal=91.23, genpowerTodayTotals=0.025, genpowerMonthTotals=0.03
+        genPowerTotal=91.23, genpowerTodayTotals=0.025, genpowerMonthTotals=8.53
     )
     register_api(aioclient_mock, device_data=data)
     await _poll(hass, freezer)
 
     assert sensor_state(hass, DEVICE_TOTAL).state == "123.45"  # never lower
     assert sensor_state(hass, f"{DEVICE}_energy_today").state == "0.025"
-    assert sensor_state(hass, f"{DEVICE}_energy_month").state == "0.03"
+    assert sensor_state(hass, f"{DEVICE}_energy_month").state == "8.53"
     # genpowerTotals of an input is 400.0 on both inputs, not an energy value.
     registry = er.async_get(hass)
     assert (
@@ -219,12 +222,18 @@ async def test_offline_or_fault_hides_live_values(
     status: int,
     fault: str,
 ) -> None:
-    """Offline (2) or fault (3): live values unavailable, counters kept."""
+    """
+    Offline (2) or fault (3): live values unavailable, counters kept.
+
+    Offline is the normal state at night: power then shows 0 W. A fault keeps
+    power unavailable.
+    """
     register_api(aioclient_mock, device_status=status)
     await _poll(hass, freezer)
 
     for unique_id in LIVE[1:]:  # station power follows the station status
-        assert sensor_state(hass, unique_id).state == STATE_UNAVAILABLE, unique_id
+        expected = "0.0" if status == 2 and unique_id in POWER else STATE_UNAVAILABLE
+        assert sensor_state(hass, unique_id).state == expected, unique_id
     for unique_id in COUNTERS:
         assert sensor_state(hass, unique_id).state != STATE_UNAVAILABLE, unique_id
     assert sensor_state(hass, DEVICE_TOTAL).state == "123.45"
@@ -265,3 +274,40 @@ async def test_max_interval_bridges_one_failed_poll(
 
     await _poll(hass, freezer, interval)
     assert sensor_state(hass, f"{DEVICE}_power").state == STATE_UNAVAILABLE
+
+
+@pytest.mark.usefixtures("setup_integration")
+async def test_night_offline_station_and_inverter_show_zero_power(
+    hass: HomeAssistant,
+    aioclient_mock: AiohttpClientMocker,
+    freezer: FrozenDateTimeFactory,
+) -> None:
+    """
+    At night the cloud reports station and inverter offline (06.11.2026).
+
+    The inverter switches off when the modules deliver too little power.
+    Power then shows 0 W, also without inputs in the response; voltages stay
+    unavailable and the station total keeps its value.
+    """
+    stations = load_fixture("station_list.json")
+    stations["data"]["rows"][0].update(status="2", genPower=0.0)
+    data = load_fixture("device_data.json")
+    data["data"].update(
+        status="2", genPower=0.0, gridVoltage=0.0, devicePhotovoltaicPanel=[]
+    )
+    register_api(aioclient_mock, device_data=data, stations=stations)
+    await _poll(hass, freezer)
+
+    for unique_id in POWER:
+        assert sensor_state(hass, unique_id).state == "0.0", unique_id
+    assert sensor_state(hass, f"{DEVICE}_grid_voltage").state == STATE_UNAVAILABLE
+    assert sensor_state(hass, f"{PANEL_1}_voltage").state == STATE_UNAVAILABLE
+    assert sensor_state(hass, "1001_energy_total").state == "123.45"
+
+    # Cloud outage longer than the grace period: unavailable, not 0 W.
+    aioclient_mock.clear_requests()
+    aioclient_mock.get(URL_STATIONS, exc=aiohttp.ClientConnectionError("DNS failure"))
+    for _ in range(5):
+        await _poll(hass, freezer)
+    for unique_id in POWER:
+        assert sensor_state(hass, unique_id).state == STATE_UNAVAILABLE, unique_id

@@ -3,7 +3,7 @@
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -28,7 +28,7 @@ from homeassistant.helpers.typing import StateType
 from homeassistant.util import dt as dt_util
 
 from . import EasyPVConfigEntry
-from .const import TOTAL_RESET_AFTER
+from .const import TOTAL_LOWER_WARN_AFTER, TOTAL_RESET_AFTER
 from .coordinator import EasyPVCoordinator
 from .entity import EasyPVDeviceEntity, EasyPVPanelEntity, EasyPVStationEntity
 from .model import PVDevice, PVPanel, PVStation
@@ -46,11 +46,13 @@ class EasyPVSensorEntityDescription(SensorEntityDescription):
     Describes an Easy PV sensor.
 
     The key is also the suffix of the unique ID, so it must never change.
-    Live measurements set requires_online (see EasyPVEntity).
+    Live measurements set requires_online, power also zero_when_offline
+    (see EasyPVEntity).
     """
 
     value_fn: Callable[[Any], StateType]
     requires_online: bool = False
+    zero_when_offline: bool = False
 
 
 _POWER: dict[str, Any] = {
@@ -60,6 +62,7 @@ _POWER: dict[str, Any] = {
     "state_class": SensorStateClass.MEASUREMENT,
     "native_unit_of_measurement": UnitOfPower.WATT,
     "requires_online": True,
+    "zero_when_offline": True,
 }
 _ENERGY: dict[str, Any] = {
     "device_class": SensorDeviceClass.ENERGY,
@@ -118,12 +121,6 @@ DEVICE_SENSORS: tuple[EasyPVSensorEntityDescription, ...] = (
         value_fn=_device(lambda device: device.energy_today),
     ),
     EasyPVSensorEntityDescription(
-        **_ENERGY,
-        key="energy_month",
-        translation_key="energy_month",
-        value_fn=_device(lambda device: device.energy_month),
-    ),
-    EasyPVSensorEntityDescription(
         key="grid_voltage",
         translation_key="grid_voltage",
         device_class=SensorDeviceClass.VOLTAGE,
@@ -145,6 +142,12 @@ DEVICE_SENSORS: tuple[EasyPVSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=_device(lambda device: device.net_fw),
     ),
+)
+DEVICE_MONTH = EasyPVSensorEntityDescription(
+    **_ENERGY,
+    key="energy_month",
+    translation_key="energy_month",
+    value_fn=_device(lambda device: device.energy_month),
 )
 DEVICE_TOTAL = EasyPVSensorEntityDescription(
     **_ENERGY_TOTAL,
@@ -220,6 +223,7 @@ async def async_setup_entry(
                 EasyPVDeviceSensor(coordinator, station_id, device_id, description)
                 for description in DEVICE_SENSORS
             ),
+            DeviceEnergyMonthSensor(coordinator, station_id, device_id, DEVICE_MONTH),
             DeviceEnergyTotalSensor(coordinator, station_id, device_id, DEVICE_TOTAL),
         ],
         create_panel_entities=lambda coordinator, station_id, device_id, number: [
@@ -238,11 +242,14 @@ class EasyPVSensorMixin:
     def _apply_description(self, description: EasyPVSensorEntityDescription) -> None:
         self.entity_description = description
         self._requires_online = description.requires_online
+        self._zero_when_offline = description.zero_when_offline
         self._attr_unique_id = f"{self._id}_{description.key}"  # type: ignore[attr-defined]
 
     @property
     def native_value(self) -> StateType:
         """Return the state of the sensor."""
+        if self._shows_zero:  # type: ignore[attr-defined]
+            return 0.0
         data = self._data  # type: ignore[attr-defined]
         return self.entity_description.value_fn(data) if data else None
 
@@ -309,19 +316,21 @@ class EasyPVPanelSensor(  # type: ignore[misc]
         self._apply_description(description)
 
 
-class MonotonicEnergyTotalMixin:
+class MonotonicEnergyMixin:
     """
-    Lifetime energy that never goes backwards.
+    Energy counter that does not go backwards on a glitch of the cloud.
 
-    Used as the absolute energy meter of the inverter: a lower value from the
-    cloud (glitch, 0 during an outage) is ignored and the last value is kept,
-    also across Home Assistant restarts. Only a lower, non-zero value that the
-    cloud reports on every update for TOTAL_RESET_AFTER is taken over as a
-    real reset. Must come first in the bases, before the Easy PV entity and
-    RestoreSensor.
+    A lower value from the cloud (glitch, 0 during an outage, the dip around
+    midnight) is ignored and the last value is kept, also across Home
+    Assistant restarts. Whether a lower value is a real reset decides
+    _accept_lower of the subclass; by default never. Must come first in the
+    bases, before the Easy PV entity and RestoreSensor.
     """
 
     _total: float | None = None
+    # When the cloud last reported the current value or a higher one.
+    _accepted_at: datetime | None = None
+    # Since when the cloud reports a lower value.
     _lower_since: datetime | None = None
 
     entity_description: EasyPVSensorEntityDescription
@@ -335,7 +344,7 @@ class MonotonicEnergyTotalMixin:
         return None if value is None else float(value)  # type: ignore[arg-type]
 
     async def async_added_to_hass(self) -> None:
-        """Restore the last known total, then apply the current cloud value."""
+        """Restore the last known value, then apply the current cloud value."""
         await super().async_added_to_hass()  # type: ignore[misc]
         last = await self.async_get_last_sensor_data()  # type: ignore[attr-defined]
         if last is not None and last.native_value is not None:
@@ -343,6 +352,9 @@ class MonotonicEnergyTotalMixin:
                 self._total = float(last.native_value)
             except TypeError, ValueError:
                 self._total = None
+        if self._total is not None:
+            state = await self.async_get_last_state()  # type: ignore[attr-defined]
+            self._accepted_at = state.last_reported if state else None
         self._handle_update()
 
     def _handle_update(self) -> None:
@@ -350,35 +362,31 @@ class MonotonicEnergyTotalMixin:
         if value is None:
             return
 
-        value = float(value)
-        if self._total is None or value >= self._total:
-            self._total = value
-            self._lower_since = None
-            return
-
-        if value <= 0:
-            # 0 means "no data", never a reset.
-            return
-
         now = dt_util.utcnow()
+        if self._total is None or value >= self._total:
+            self._take_over(value, now)
+            return
+
         if self._lower_since is None:
-            LOGGER.warning(
-                "Cloud reports a lower total energy (%s kWh) than before "
-                "(%s kWh); keeping the previous value",
+            LOGGER.debug(
+                "Cloud reports a lower %s (%s kWh) than before (%s kWh); "
+                "keeping the previous value",
+                self.entity_description.key,
                 value,
                 self._total,
             )
             self._lower_since = now
-        elif now - self._lower_since >= TOTAL_RESET_AFTER:
-            LOGGER.warning(
-                "Cloud has reported a lower total energy for %s; taking over "
-                "%s kWh (before %s kWh) as a reset of the counter",
-                TOTAL_RESET_AFTER,
-                value,
-                self._total,
-            )
-            self._total = value
-            self._lower_since = None
+        if self._accept_lower(value, now):
+            self._take_over(value, now)
+
+    def _take_over(self, value: float, now: datetime) -> None:
+        self._total = value
+        self._accepted_at = now
+        self._lower_since = None
+
+    def _accept_lower(self, value: float, now: datetime) -> bool:  # noqa: ARG002
+        """Return True if a lower value from the cloud is a real reset."""
+        return False
 
     @property
     def native_value(self) -> float | None:
@@ -387,9 +395,20 @@ class MonotonicEnergyTotalMixin:
 
 
 class StationEnergyTotalSensor(  # type: ignore[misc]
-    MonotonicEnergyTotalMixin, EasyPVSensorMixin, EasyPVStationEntity, RestoreSensor
+    MonotonicEnergyMixin, EasyPVSensorMixin, EasyPVStationEntity, RestoreSensor
 ):
-    """Lifetime energy of the station (powerTotals of getStationList)."""
+    """
+    Lifetime energy of the station (powerTotals of getStationList).
+
+    The absolute meter for the energy balance. It is never reset: it keeps
+    counting when the inverter is registered again in the app. A lower value
+    is never taken over; the sensor waits until the cloud exceeds the last
+    value again (around midnight the cloud reports it 0.01 kWh lower until
+    the next yield). Only a lower value lasting TOTAL_LOWER_WARN_AFTER is
+    logged as a warning, once.
+    """
+
+    _lower_warned = False
 
     def __init__(
         self,
@@ -401,11 +420,40 @@ class StationEnergyTotalSensor(  # type: ignore[misc]
         super().__init__(coordinator, station_id)
         self._apply_description(description)
 
+    def _take_over(self, value: float, now: datetime) -> None:
+        super()._take_over(value, now)
+        self._lower_warned = False
 
-class DeviceEnergyTotalSensor(  # type: ignore[misc]
-    MonotonicEnergyTotalMixin, EasyPVSensorMixin, EasyPVDeviceEntity, RestoreSensor
+    def _accept_lower(self, value: float, now: datetime) -> bool:
+        if (
+            not self._lower_warned
+            and self._lower_since is not None
+            and now - self._lower_since >= TOTAL_LOWER_WARN_AFTER
+        ):
+            LOGGER.warning(
+                "Cloud has reported a lower total energy of the station for "
+                "%s (%s kWh, keeping %s kWh); the value is not taken over",
+                TOTAL_LOWER_WARN_AFTER,
+                value,
+                self._total,
+            )
+            self._lower_warned = True
+        return False
+
+
+class DeviceEnergyMonthSensor(  # type: ignore[misc]
+    MonotonicEnergyMixin, EasyPVSensorMixin, EasyPVDeviceEntity, RestoreSensor
 ):
-    """Lifetime energy of the inverter (genPowerTotal of getDeviceDataInfo)."""
+    """
+    Energy of the inverter this month (genpowerMonthTotals).
+
+    Around midnight the cloud reports 0 for a few minutes and then the old
+    value again. With total_increasing Home Assistant would count that as a
+    new cycle and add the month's energy a second time. A lower value is
+    therefore only taken over on the first day of a month or when the month
+    has changed since the last value, both in the time zone of the station
+    (the cloud resets its counters at midnight there).
+    """
 
     def __init__(
         self,
@@ -417,3 +465,52 @@ class DeviceEnergyTotalSensor(  # type: ignore[misc]
         """Initialize the sensor."""
         super().__init__(coordinator, station_id, device_id)
         self._apply_description(description)
+
+    def _accept_lower(self, value: float, now: datetime) -> bool:  # noqa: ARG002
+        station = self.coordinator.get_station(self._station_id)
+        offset = (station.utc_offset if station else None) or timedelta()
+        local_now = now + offset
+        if local_now.day == 1 or self._accepted_at is None:
+            return True
+        local_accepted = self._accepted_at + offset
+        return (local_now.year, local_now.month) != (
+            local_accepted.year,
+            local_accepted.month,
+        )
+
+
+class DeviceEnergyTotalSensor(  # type: ignore[misc]
+    MonotonicEnergyMixin, EasyPVSensorMixin, EasyPVDeviceEntity, RestoreSensor
+):
+    """
+    Lifetime energy of the inverter (genPowerTotal of getDeviceDataInfo).
+
+    Falls to 0 when the inverter is registered again in the app. A lower,
+    non-zero value that the cloud reports for TOTAL_RESET_AFTER is taken over
+    as such a reset; 0 means "no data" and is never taken over.
+    """
+
+    def __init__(
+        self,
+        coordinator: EasyPVCoordinator,
+        station_id: str,
+        device_id: str,
+        description: EasyPVSensorEntityDescription,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, station_id, device_id)
+        self._apply_description(description)
+
+    def _accept_lower(self, value: float, now: datetime) -> bool:
+        if value <= 0 or self._lower_since is None:
+            return False
+        if now - self._lower_since < TOTAL_RESET_AFTER:
+            return False
+        LOGGER.warning(
+            "Cloud has reported a lower total energy of the inverter for %s; "
+            "taking over %s kWh (before %s kWh) as a reset of the counter",
+            TOTAL_RESET_AFTER,
+            value,
+            self._total,
+        )
+        return True
