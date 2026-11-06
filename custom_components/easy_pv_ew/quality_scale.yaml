@@ -7,7 +7,7 @@ rules:
     comment: The integration provides no actions.
   appropriate-polling:
     status: done
-    comment: Cloud data is polled every 60 seconds by one coordinator.
+    comment: One coordinator polls the cloud every 60 seconds by default (option, 60 to 240 seconds).
   brands:
     status: exempt
     comment: Custom integration installed via HACS, not part of the brands repository.

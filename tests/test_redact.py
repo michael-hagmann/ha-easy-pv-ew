@@ -104,7 +104,7 @@ async def test_debug_log_is_anonymized(
         "1001",
         "2001",
         "SN0000000000",
-        "Gartenhaus",
+        "Teststation",
         "Musterstadt",
         "Musterstraße",
         "50.0",

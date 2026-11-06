@@ -22,7 +22,7 @@ Werte durch die festen Platzhalter ersetzen, die die vorhandenen Fixtures schon 
 | Stations-ID (`id` in `getStationList`, `stationId`, `powerId`) | `1001` |
 | Geräte-ID (`id` in `getPowerList`, `deviceId`) | `2001` (weitere: `2002` …) |
 | Seriennummer (`deviceNum`, `sn`, MAC, IMEI o. ä.) | `SN0000000000` |
-| Stationsname | `Gartenhaus` |
+| Stationsname | `Teststation` |
 | Adresse, Ort (`address`, `plantLocation`) | `Musterstraße 1, 12345 Musterstadt` / `Musterstadt` |
 | Koordinaten (`latitude`, `longitude`) | `50.0` / `8.0` |
 | Benutzername, Kontoname | `Testkonto` |

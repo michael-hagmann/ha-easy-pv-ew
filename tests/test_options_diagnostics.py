@@ -74,7 +74,7 @@ async def test_diagnostics_anonymized(
         "1001",
         "2001",
         "SN0000000000",
-        "Gartenhaus",
+        "Teststation",
         "Musterstadt",
         "Musterstraße",
         "test-token",

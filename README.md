@@ -94,7 +94,7 @@ The integration polls the Easy PV cloud (`cloud_polling`); there is no local int
 - Works only through the Easy PV cloud; without internet access there are no values. The cloud API is not officially documented and may change without notice.
 - Accuracy depends on the inverter: an independent test found the app values 8–10 % lower than a reference meter. The integration shows the cloud values unchanged.
 - The lifetime energy of the inverter starts again at 0 when the inverter is registered anew in the Easy PV app; the station total continues.
-- The daily and monthly energy is reset by the cloud, possibly in the time zone of the manufacturer's servers rather than your local time.
+- The cloud resets the daily and monthly energy at midnight in the time zone set for the station in the app (e.g. UTC), which may differ from your local time.
 - The login token cannot be refreshed. When it expires, the entities become unavailable and Home Assistant asks you to re-authenticate (**Settings → Devices & services**).
 - The location tracker of a station shows the zone (e.g. `home`), not the address.
 
@@ -112,10 +112,6 @@ The integration polls the Easy PV cloud (`cloud_polling`); there is no local int
 2. Optional: remove the integration in HACS (**HACS → Easy PV (EW) → Remove**) or delete the folder `custom_components/easy_pv_ew`, then restart Home Assistant.
 
 A single inverter or PV input can be deleted on its device page once the cloud no longer reports it.
-
-## Development
-
-The devcontainer (`.devcontainer/devcontainer.json`) bind-mounts a host folder to `/workspaces/austausch`. The source is taken from the host environment variable `HA_AUSTAUSCH` (`${localEnv:HA_AUSTAUSCH}`), which must be set on the machine running VS Code before VS Code starts. The folder must exist on the host, otherwise the container does not start; set the variable and create the folder, or adjust/remove the mount before opening the container.
 
 ## Contributions are welcome!
 

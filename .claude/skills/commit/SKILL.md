@@ -31,7 +31,7 @@ Nichts davon darf im Diff stehen, auch nicht in Tests, Fixtures, Kommentaren ode
 - echte Seriennummern, Geräte- oder Stations-IDs, Standort, Adresse, Koordinaten, Kontoname, E-Mail
 - Benutzernamen und persönliche Pfade des Entwicklungsrechners, z. B. unter `C:\Users\…`, `/mnt/c/Users/…` oder `/home/…` (in Beispielen `<Benutzername>`)
 - Dateien aus `config/` außer `config/configuration.yaml`
-- Dateien aus `local/` (OpenAPI-Beschreibung, Briefing, Handover, offene Entscheidungen) oder `.env.local`; die Adresse der Beschreibung darf stehen (`openapi_url` im Vertrag)
+- Dateien aus `local/` (OpenAPI-Beschreibung, Briefing, Handover, offene Entscheidungen); die Adresse der Beschreibung darf stehen (`openapi_url` im Vertrag)
 
 Bei Fixtures aus echten Antworten vorher den Skill `fixture-anonymisieren` anwenden.
 

@@ -152,7 +152,7 @@ def test_real_fixture_redacted_completely(name: str) -> None:
         "4001",
         "SN0000000000",
         "X000000",
-        "Gartenhaus",
+        "Teststation",
         "Musterstadt",
         "50.0",
         "'8.0'",

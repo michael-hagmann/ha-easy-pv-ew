@@ -4,6 +4,7 @@
   "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude && scripts/setup",
   "mounts": [
     "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume",
+    // Maintainer only: exchange folder, needs HA_AUSTAUSCH on the Docker host. Remove this line otherwise.
     "source=${localEnv:HA_AUSTAUSCH},target=/workspaces/austausch,type=bind"
   ],
   "forwardPorts": [

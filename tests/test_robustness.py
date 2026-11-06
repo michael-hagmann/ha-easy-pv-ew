@@ -147,7 +147,7 @@ async def test_total_restored_after_restart(
         hass,
         [
             (
-                State("sensor.gartenhaus_energy_total", "200.0"),
+                State("sensor.teststation_energy_total", "200.0"),
                 {"native_value": 200.0, "native_unit_of_measurement": "kWh"},
             )
         ],
@@ -158,14 +158,14 @@ async def test_total_restored_after_restart(
         "sensor",
         DOMAIN,
         TOTAL,
-        suggested_object_id="gartenhaus_energy_total",
+        suggested_object_id="teststation_energy_total",
         config_entry=config_entry,
     )
 
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
-    assert sensor_entity_id(hass, TOTAL) == "sensor.gartenhaus_energy_total"
+    assert sensor_entity_id(hass, TOTAL) == "sensor.teststation_energy_total"
     assert sensor_state(hass, TOTAL).state == "200.0"
 
 

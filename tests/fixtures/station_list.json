@@ -6,7 +6,7 @@
     "rows": [
       {
         "id": "1001",
-        "name": "Gartenhaus",
+        "name": "Teststation",
         "address": "Musterstraße 1, 12345 Musterstadt",
         "plantLocation": "Musterstadt",
         "latitude": "50.0",

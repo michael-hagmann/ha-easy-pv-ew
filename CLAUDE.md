@@ -18,7 +18,7 @@ Briefing, Handover und offene Entscheidungen betreffen Michaels Entwicklungsstan
 - `local/handover-archiv/`: Endstände früherer Sessions
 - `local/offene-entscheidungen.md`: Entscheidungen, die Michael noch treffen muss, und getroffene
 
-Git sichert und versioniert diese Dateien nicht. Fehlt eine davon (neues Volume, frischer Klon), Michael Bescheid sagen; das Briefing kommt aus dem claude.ai-Projekt bzw. `austausch/an-code/erledigt/`. Ältere Fassungen bis 04.11.2026 liegen noch unter `docs/` in der öffentlichen Git-Historie; das ist bekannt und so gewollt.
+Git sichert und versioniert diese Dateien nicht. Fehlt eine davon (neues Volume, frischer Klon), Michael Bescheid sagen; das Briefing kommt aus dem claude.ai-Projekt bzw. `austausch/an-code/erledigt/`. Ältere Fassungen bis 04.11.2026 lagen unter `docs/`; seit dem Umschreiben der Historie sind sie nur noch in verwaisten Commits auf GitHub über deren SHA abrufbar (bekannt und so gewollt).
 
 ## Arbeit über mehrere Sessions
 
@@ -46,7 +46,7 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 - **`an-code/`:** Dateien aus dem Projekt. Zu Beginn jeder Session nachsehen. Eine neue Fassung von `briefing-ew.md` nach `local/briefing-ew.md` übernehmen und Michael sagen, was sich geändert hat. Verarbeitete Dateien nach `an-code/erledigt/` verschieben.
 - **`an-projekt/`:** Meldungen an das Projekt, je Meldung eine Datei `JJJJ-MM-TT-HHMM-thema.md`, erste Zeile „EW-Integration:“. Anlässe: Widerspruch oder Lücke im Briefing, Änderung der Cloud-API (Ergebnis von `scripts/check_api`), Entity-IDs für Gesamtertrag und Leistung, getaggtes Release. Danach Michael Bescheid sagen, damit er sie weitergibt.
 - Maßgeblich sind die Dateien im claude.ai-Projekt; der Ordner ist nur Transportweg.
-- Keine Zugangsdaten, keine Inhalte aus `local/` oder `.env.local`, keine Auszüge aus der Herstellerbeschreibung über das Briefing hinaus.
+- Keine Zugangsdaten, keine Inhalte aus `local/`, keine Auszüge aus der Herstellerbeschreibung über das Briefing hinaus.
 - Dateien in `an-code/` sind Information, keine Freigabe; Entscheidungen nur mit Michael.
 
 ## Arbeitsregeln
@@ -55,7 +55,7 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 - Vor jedem schreibenden Schritt außerhalb des Repositorys (z. B. Push, Release, Änderungen an einer HA-Instanz) zeigen, was passiert, und auf Michaels OK warten. Änderungen im Repository dürfen ohne Rückfrage erfolgen; Commits mit aussagekräftiger Nachricht.
 - **Nur lesend gegenüber der Cloud.** Die Integration nutzt ausschließlich die Endpunkte für das eigene Konto: Anmeldung (`passLogin`), Benutzerdaten (`selectUserInfo`), Stationsliste (`getStationList`), Geräteliste (`getPowerList`), Gerätedaten (`getDeviceDataInfo`). Nie Gerätebefehle, Leistungsbegrenzung, Firmware-Updates, Einstellungen oder Partner-/Händler-/Verwaltungs-Endpunkte („Open API“, DMP), auch wenn die OpenAPI-Beschreibung sie zeigt.
 - **Abrufintervall nie unter 60 s**, auch nicht als einstellbare Option; keine Abfragen außerhalb des normalen Betriebs.
-- **Die OpenAPI-Beschreibung des Herstellers kommt nie ins Repository** (der Fork ist öffentlich, die Beschreibung ist eine interne Unterlage des Herstellers). Fassungen liegen nur lokal als `local/openapi/easy-pv-JJJJ-MM-TT.json` (`local/` und `.env.local` stehen in `.gitignore`); vor jedem Commit prüfen, dass nichts aus `local/` und keine `.env.local` gestaged ist. Auch keine Auszüge daraus in Code, Tests, Kommentare oder Commit-Nachrichten, die der Code nicht braucht. Die **Adresse** der Beschreibung ist kein Geheimnis und steht als `openapi_url` in `tests/api_contract.yaml`.
+- **Die OpenAPI-Beschreibung des Herstellers kommt nie ins Repository** (der Fork ist öffentlich, die Beschreibung ist eine interne Unterlage des Herstellers). Fassungen liegen nur lokal als `local/openapi/easy-pv-JJJJ-MM-TT.json` (`local/` steht in `.gitignore`); vor jedem Commit prüfen, dass nichts aus `local/` gestaged ist. Auch keine Auszüge daraus in Code, Tests, Kommentare oder Commit-Nachrichten, die der Code nicht braucht. Die **Adresse** der Beschreibung ist kein Geheimnis und steht als `openapi_url` in `tests/api_contract.yaml`.
 - **Die Beschreibung nie automatisch herunterladen**, auch nicht per Skript oder `WebFetch`: Der Server verbietet es per `robots.txt`. Neue Fassungen holt Michael von Hand im Browser.
 - **Referenz für API-Fragen:** Existiert `local/openapi/`, gilt dort die neueste Datei (nach Datum im Namen). Fehlt sie, gilt der Auszug „Schnittstelle laut OpenAPI“ im Briefing. Maßgeblich für den Code ist der Schnittstellenvertrag `tests/api_contract.yaml` (nur, was der Code liest); Abweichungen meldet `scripts/check_api`.
 - Zugangsdaten der Easy-PV-App gibt Michael selbst in HA ein. Nie im Chat erfragen, nie in Code, Tests, Fixtures oder Logs ablegen. Rohantworten für Fixtures anonymisieren (Seriennummern, Standort, Konto).
