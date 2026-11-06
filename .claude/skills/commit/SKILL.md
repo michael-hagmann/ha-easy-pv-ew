@@ -12,6 +12,7 @@ Ablauf für jeden Commit in diesem Repository. Committen darf ohne Rückfrage er
 ```bash
 scripts/lint    # formatiert und korrigiert; danach muss "All checks passed!" kommen
 scripts/test
+git config user.email   # muss die Noreply-Adresse aus CLAUDE.md sein, nie eine private
 ```
 
 Die Ausgabe **nicht** durch eine Pipe schicken (`scripts/lint | tail`) und nicht mit `&&` an `git commit` hängen: Die Pipe übernimmt den Exit-Code von `tail`, ein Lint-Fehler fällt dann nicht auf. Ist die Ausgabe zu lang, mit `set -o pipefail` arbeiten.

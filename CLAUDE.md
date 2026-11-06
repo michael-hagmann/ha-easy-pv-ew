@@ -43,7 +43,7 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 `/workspaces/austausch` ist der Transportweg zum claude.ai-Projekt „HA PV Konfiguration“ (Bind-Mount aus `.devcontainer/devcontainer.json`). Remote Control und Nachrichten zwischen Sessions werden nicht genutzt.
 
 - **Regeln** stehen in `/workspaces/austausch/LIESMICH.md`; zu Beginn jeder Session lesen (Skill `session-start`). Die Datei verwaltet das Projekt (Koordinator); nicht selbst ändern, Änderungswünsche als Meldung nach `an-projekt/`.
-- **`an-code/`:** Dateien aus dem Projekt. Zu Beginn jeder Session nachsehen. Eine neue Fassung von `briefing-ew.md` nach `local/briefing-ew.md` übernehmen und Michael sagen, was sich geändert hat. Verarbeitete Dateien nach `an-code/erledigt/` verschieben.
+- **`an-code/`:** Dateien aus dem Projekt. Zu Beginn jeder Session nachsehen, außerdem vor jeder Umsetzung einer Entscheidung, die das Energie-Setup betrifft, und vor jeder Meldung nach `an-projekt/`: Das Projekt entscheidet parallel mit Michael. Widersprüche nicht selbst auflösen, sondern beide Stände mit Empfehlung vorlegen. Eine neue Fassung von `briefing-ew.md` nach `local/briefing-ew.md` übernehmen und Michael sagen, was sich geändert hat. Verarbeitete Dateien nach `an-code/erledigt/` verschieben.
 - **`an-projekt/`:** Meldungen an das Projekt, je Meldung eine Datei `JJJJ-MM-TT-HHMM-thema.md`, erste Zeile „EW-Integration:“. Anlässe: Widerspruch oder Lücke im Briefing, Änderung der Cloud-API (Ergebnis von `scripts/check_api`), Entity-IDs für Gesamtertrag und Leistung, getaggtes Release. Danach Michael Bescheid sagen, damit er sie weitergibt.
 - Maßgeblich sind die Dateien im claude.ai-Projekt; der Ordner ist nur Transportweg.
 - Keine Zugangsdaten, keine Inhalte aus `local/`, keine Auszüge aus der Herstellerbeschreibung über das Briefing hinaus.
@@ -71,6 +71,7 @@ Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcon
 - **Repository** unter `/workspaces/ha-easy-pv-ew`, am besten auf einem Container-Volume statt in einem eingebundenen Host-Ordner (deutlich schneller, vor allem unter Windows).
 - **Kein Zugriff** auf die produktive HA-Instanz oder das Heimnetz nötig, und so ist es gewollt. Gebraucht wird nur Internetzugang zur Easy-PV-Cloud.
 - **Test-Instanz:** HA im Container auf Port 8123, VS Code leitet den Port an den Host weiter.
+- **Commit-Adresse:** nur die GitHub-Noreply-Adresse (`94895859+michael-hagmann@users.noreply.github.com`), eingestellt per `git config user.email` im Repository (nicht global: VS Code übernimmt `~/.gitconfig` vom Host, die dort eingetragene private Adresse darf nicht in Commits landen).
 - **Git push** läuft über den Credential-Helper von VS Code und funktioniert nur, solange VS Code mit dem Container verbunden ist. `gh` ist nicht installiert.
 - **Rebuild** des Containers (nach Änderungen an `devcontainer.json`) verwirft alles außerhalb von `/workspaces` und den Volumes: installierte Pakete, Shell-Verlauf. `~/.claude` (Login, Memories) liegt auf einem eigenen Volume. Ein Rebuild ist ein Schritt außerhalb des Repositorys und braucht Michaels OK; er löst ihn selbst in VS Code aus.
 - **Cloud-Adresse und DNS:** `inverter-en.easycharging-tech.com` ist ein CNAME auf ein CDN (Alibaba, `*.w.cdngslb.com`), dessen Adressen nur 60 s gelten. Die geteilte HA-Session hält DNS-Cache und Verbindung kürzer, also wird bei jedem Abruf neu aufgelöst. Gelegentliche DNS- oder Verbindungs-Timeouts sind deshalb zu erwarten und kein Fehler der Integration.
@@ -96,10 +97,10 @@ Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcon
 
 ## Schnittstelle zum Energie-Setup (Kurzfassung)
 
-- Gesamtertrag des EW: kWh aus `powerTotals` der Station (`getStationList`), nicht `genPowerTotal` des Geräts (entschieden 05.11.2026: der Gerätezähler fällt bei einer Neuregistrierung in der App auf 0, der Stationszähler läuft weiter). `device_class: energy`, `state_class: total_increasing`, nie ein Rücksprung, stabile Entity-ID.
-- Einheiten an echten Daten geprüft (05.11.2026): Alle Energiefelder sind kWh, auch die von `getDeviceDataInfo`, für die die OpenAPI-Beschreibung Wh nennt (`spec_unit: Wh` im Vertrag). Nicht durch 1000 teilen.
-- Leistung des EW: W, `device_class: power`, `state_class: measurement`. Nachts schaltet sich der EW ab; meldet die Cloud ihn offline (`status` 2), ist die Leistung `unavailable`, nicht 0 W (entschieden 06.11.2026: das Energie-Setup liest sie mit `float(0)`, eine Störung am Tag bleibt erkennbar).
-- Um Mitternacht (Zeitzone der Station, `timeZone`) meldet die Cloud einige Minuten falsche Zähler (Station minus Tagesertrag, Monat 0) und danach den Stationszähler 0,01 kWh zu niedrig. Stationszähler übernimmt nie einen kleineren Wert, Gerätezähler erst nach 24 Stunden, Ertrag Monat nur am Monatsersten (entschieden 06.11.2026).
+- Gesamtertrag des EW: kWh aus `powerTotals` der Station (`getStationList`), nicht `genPowerTotal` des Geräts (der fällt bei einer Neuregistrierung in der App auf 0). `device_class: energy`, `state_class: total_increasing`, nie ein Rücksprung, stabile Entity-ID.
+- Alle Energiefelder sind kWh (an echten Daten geprüft), auch die von `getDeviceDataInfo`, für die die OpenAPI-Beschreibung Wh nennt (`spec_unit: Wh` im Vertrag). Nicht durch 1000 teilen.
+- Leistung des EW: W, `device_class: power`, `state_class: measurement`. Nachts schaltet sich der EW ab; meldet die Cloud ihn offline (`status` 2), ist die Leistung `unavailable`, nicht 0 W.
+- Um Mitternacht (Zeitzone der Station, `timeZone`) meldet die Cloud einige Minuten falsche Zähler (Station minus Tagesertrag, Monat 0) und danach den Stationszähler 0,01 kWh zu niedrig. Stationszähler übernimmt nie einen kleineren Wert, Gerätezähler erst nach 24 Stunden, Ertrag Monat nur am Monatsersten oder nach einem Monatswechsel.
 - Bei Cloud-Ausfall lieber `unavailable` als falsche Werte.
 
-Details und Hintergrund im Briefing.
+Hintergrund und Begründungen im Briefing und in `local/offene-entscheidungen.md`.
