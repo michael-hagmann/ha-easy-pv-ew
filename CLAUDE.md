@@ -96,8 +96,8 @@ Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcon
 
 - Gesamtertrag des EW: kWh aus `powerTotals` der Station (`getStationList`), nicht `genPowerTotal` des Geräts (entschieden 05.11.2026: der Gerätezähler fällt bei einer Neuregistrierung in der App auf 0, der Stationszähler läuft weiter). `device_class: energy`, `state_class: total_increasing`, nie ein Rücksprung, stabile Entity-ID.
 - Einheiten an echten Daten geprüft (05.11.2026): Alle Energiefelder sind kWh, auch die von `getDeviceDataInfo`, für die die OpenAPI-Beschreibung Wh nennt (`spec_unit: Wh` im Vertrag). Nicht durch 1000 teilen.
-- Leistung des EW: W, `device_class: power`, `state_class: measurement`. Nachts schaltet sich der EW ab; meldet die Cloud ihn offline (`status` 2), zeigt die Leistung 0 W (entschieden 06.11.2026), bei Störung oder Cloud-Ausfall `unavailable`.
-- Um Mitternacht (Zeitzone der Station, `timeZone`) meldet die Cloud einige Minuten falsche Zähler (Station minus Tagesertrag, Monat 0) und danach den Stationszähler 0,01 kWh zu niedrig. Stationszähler übernimmt nie einen kleineren Wert, Ertrag Monat nur am Monatsersten (entschieden 06.11.2026).
+- Leistung des EW: W, `device_class: power`, `state_class: measurement`. Nachts schaltet sich der EW ab; meldet die Cloud ihn offline (`status` 2), ist die Leistung `unavailable`, nicht 0 W (entschieden 06.11.2026: das Energie-Setup liest sie mit `float(0)`, eine Störung am Tag bleibt erkennbar).
+- Um Mitternacht (Zeitzone der Station, `timeZone`) meldet die Cloud einige Minuten falsche Zähler (Station minus Tagesertrag, Monat 0) und danach den Stationszähler 0,01 kWh zu niedrig. Stationszähler übernimmt nie einen kleineren Wert, Gerätezähler erst nach 24 Stunden, Ertrag Monat nur am Monatsersten (entschieden 06.11.2026).
 - Bei Cloud-Ausfall lieber `unavailable` als falsche Werte.
 
 Details und Hintergrund im Briefing.

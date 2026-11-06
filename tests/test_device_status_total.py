@@ -53,8 +53,6 @@ LIVE = [
     f"{PANEL_1}_temperature",
     f"{PANEL_1}_frequency",
 ]
-# Power shows 0 W while the cloud reports the inverter offline (at night).
-POWER = ["1001_power", f"{DEVICE}_power", f"{PANEL_1}_power"]
 # Energy counters and firmware: still valid while offline.
 COUNTERS = [
     "1001_energy_total",
@@ -222,18 +220,12 @@ async def test_offline_or_fault_hides_live_values(
     status: int,
     fault: str,
 ) -> None:
-    """
-    Offline (2) or fault (3): live values unavailable, counters kept.
-
-    Offline is the normal state at night: power then shows 0 W. A fault keeps
-    power unavailable.
-    """
+    """Offline (2) or fault (3): live values unavailable, counters kept."""
     register_api(aioclient_mock, device_status=status)
     await _poll(hass, freezer)
 
     for unique_id in LIVE[1:]:  # station power follows the station status
-        expected = "0.0" if status == 2 and unique_id in POWER else STATE_UNAVAILABLE
-        assert sensor_state(hass, unique_id).state == expected, unique_id
+        assert sensor_state(hass, unique_id).state == STATE_UNAVAILABLE, unique_id
     for unique_id in COUNTERS:
         assert sensor_state(hass, unique_id).state != STATE_UNAVAILABLE, unique_id
     assert sensor_state(hass, DEVICE_TOTAL).state == "123.45"
@@ -277,7 +269,7 @@ async def test_max_interval_bridges_one_failed_poll(
 
 
 @pytest.mark.usefixtures("setup_integration")
-async def test_night_offline_station_and_inverter_show_zero_power(
+async def test_night_offline_station_and_inverter(
     hass: HomeAssistant,
     aioclient_mock: AiohttpClientMocker,
     freezer: FrozenDateTimeFactory,
@@ -286,8 +278,9 @@ async def test_night_offline_station_and_inverter_show_zero_power(
     At night the cloud reports station and inverter offline (06.11.2026).
 
     The inverter switches off when the modules deliver too little power.
-    Power then shows 0 W, also without inputs in the response; voltages stay
-    unavailable and the station total keeps its value.
+    Live values are unavailable, not 0 W (decided 06.11.2026: the energy
+    setup reads them with float(0), and a fault during the day stays
+    visible); the counters keep their values.
     """
     stations = load_fixture("station_list.json")
     stations["data"]["rows"][0].update(status="2", genPower=0.0)
@@ -298,16 +291,8 @@ async def test_night_offline_station_and_inverter_show_zero_power(
     register_api(aioclient_mock, device_data=data, stations=stations)
     await _poll(hass, freezer)
 
-    for unique_id in POWER:
-        assert sensor_state(hass, unique_id).state == "0.0", unique_id
-    assert sensor_state(hass, f"{DEVICE}_grid_voltage").state == STATE_UNAVAILABLE
-    assert sensor_state(hass, f"{PANEL_1}_voltage").state == STATE_UNAVAILABLE
-    assert sensor_state(hass, "1001_energy_total").state == "123.45"
-
-    # Cloud outage longer than the grace period: unavailable, not 0 W.
-    aioclient_mock.clear_requests()
-    aioclient_mock.get(URL_STATIONS, exc=aiohttp.ClientConnectionError("DNS failure"))
-    for _ in range(5):
-        await _poll(hass, freezer)
-    for unique_id in POWER:
+    for unique_id in LIVE[:5]:
         assert sensor_state(hass, unique_id).state == STATE_UNAVAILABLE, unique_id
+    assert sensor_state(hass, "1001_energy_total").state == "123.45"
+    assert sensor_state(hass, DEVICE_TOTAL).state == "123.45"
+    assert sensor_state(hass, f"{DEVICE}_energy_month").state == "8.5"

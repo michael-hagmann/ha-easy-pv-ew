@@ -23,8 +23,10 @@ STALE_DATA_GRACE = timedelta(minutes=5)
 TOTAL_LOWER_WARN_AFTER = timedelta(days=1)
 # The inverter total really falls to 0 when the inverter is registered again
 # in the app. A lower (non-zero) value that the cloud keeps reporting for this
-# long is accepted as such a reset; otherwise the sensor would be stuck.
-TOTAL_RESET_AFTER = timedelta(hours=6)
+# long is accepted as such a reset; otherwise the sensor would be stuck. A full
+# day, so that the nightly switch-off of the inverter (up to about 16 hours
+# in winter) and the dip around midnight are never taken for a reset.
+TOTAL_RESET_AFTER = timedelta(hours=24)
 
 # Options
 CONF_SCAN_INTERVAL = "scan_interval"

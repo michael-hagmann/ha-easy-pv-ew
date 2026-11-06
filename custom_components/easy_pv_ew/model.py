@@ -55,16 +55,6 @@ class PVDevice(PVEntity):
         """Return False if the cloud reports the inverter offline or faulty."""
         return self.status is None or self.status == STATUS_ONLINE
 
-    @property
-    def is_offline(self) -> bool:
-        """
-        Return True only if the cloud explicitly reports the inverter offline.
-
-        The inverter switches off when the modules deliver too little power,
-        so it is offline every night. A fault (3) is not offline.
-        """
-        return self.status == STATUS_OFFLINE
-
 
 @dataclass
 class PVStation(PVEntity):
@@ -90,8 +80,3 @@ class PVStation(PVEntity):
     def is_online(self) -> bool:
         """Return False if the cloud reports the station offline."""
         return self.status is None or self.status == STATUS_ONLINE
-
-    @property
-    def is_offline(self) -> bool:
-        """Return True only if the cloud explicitly reports the station offline."""
-        return self.status == STATUS_OFFLINE

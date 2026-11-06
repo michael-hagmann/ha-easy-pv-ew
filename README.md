@@ -82,9 +82,9 @@ A diagnostics download (**Settings → Devices & services → Easy PV (EW) → �
 The integration polls the Easy PV cloud (`cloud_polling`); there is no local interface on the inverter. Every scan interval it reads the station list and the data of each inverter, one after another.
 
 - **Short cloud outages** (network or DNS hiccups) are bridged: the last valid values are kept for up to 5 minutes, after that the entities become unavailable.
-- **Offline or faulty inverter:** the inverter switches off when the modules deliver too little power, so the cloud reports it offline every night. Power then shows 0 W; voltage, current, temperature and frequency are unavailable. While the inverter is faulty, or the cloud cannot be reached, power is unavailable as well. Energy counters stay available.
+- **Offline or faulty inverter:** the inverter switches off when the modules deliver too little power, so the cloud reports it offline every night. While it is offline or faulty, live values (power, voltage, current, temperature, frequency) are unavailable. Energy counters stay available.
 - **Lifetime energy of the station never goes backwards:** a lower value from the cloud (around midnight the cloud reports it briefly lower and then 0.01 kWh below the previous value until the next yield) is ignored and the last value is kept until the cloud exceeds it again. If the lower value lasts a day, a warning is logged once.
-- **Lifetime energy of the inverter** behaves the same, but a lower non-zero value that persists for 6 hours is accepted as a real reset (the inverter counts from 0 again after a new registration in the app); 0 is never accepted.
+- **Lifetime energy of the inverter** behaves the same, but a lower non-zero value that persists for 24 hours is accepted as a real reset (the inverter counts from 0 again after a new registration in the app); 0 is never accepted.
 - **Energy this month** ignores the brief 0 the cloud reports at midnight; a lower value is only taken over on the first day of a month or after a change of month, in the time zone of the station.
 - **Unexpected responses:** every response is checked for missing fields, wrong types and implausible values. Such values are ignored (the entity becomes unavailable) and a warning is logged once per field until the next restart.
 - New inverters and PV inputs are added automatically.

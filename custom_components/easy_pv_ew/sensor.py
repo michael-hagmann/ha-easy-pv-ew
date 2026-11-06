@@ -46,13 +46,11 @@ class EasyPVSensorEntityDescription(SensorEntityDescription):
     Describes an Easy PV sensor.
 
     The key is also the suffix of the unique ID, so it must never change.
-    Live measurements set requires_online, power also zero_when_offline
-    (see EasyPVEntity).
+    Live measurements set requires_online (see EasyPVEntity).
     """
 
     value_fn: Callable[[Any], StateType]
     requires_online: bool = False
-    zero_when_offline: bool = False
 
 
 _POWER: dict[str, Any] = {
@@ -62,7 +60,6 @@ _POWER: dict[str, Any] = {
     "state_class": SensorStateClass.MEASUREMENT,
     "native_unit_of_measurement": UnitOfPower.WATT,
     "requires_online": True,
-    "zero_when_offline": True,
 }
 _ENERGY: dict[str, Any] = {
     "device_class": SensorDeviceClass.ENERGY,
@@ -242,14 +239,11 @@ class EasyPVSensorMixin:
     def _apply_description(self, description: EasyPVSensorEntityDescription) -> None:
         self.entity_description = description
         self._requires_online = description.requires_online
-        self._zero_when_offline = description.zero_when_offline
         self._attr_unique_id = f"{self._id}_{description.key}"  # type: ignore[attr-defined]
 
     @property
     def native_value(self) -> StateType:
         """Return the state of the sensor."""
-        if self._shows_zero:  # type: ignore[attr-defined]
-            return 0.0
         data = self._data  # type: ignore[attr-defined]
         return self.entity_description.value_fn(data) if data else None
 

@@ -228,10 +228,8 @@ async def test_offline_without_panels_and_fields(
     coordinator = hass.config_entries.async_entries(DOMAIN)[0].runtime_data
     assert coordinator.last_update_success
     assert sensor_state(hass, DEVICE_TOTAL).state == "123.45"
-    # Offline at night: power 0 W (decided 06.11.2026), also without inputs.
-    assert sensor_state(hass, DEVICE_POWER).state == "0.0"
-    assert sensor_state(hass, f"{PANEL_1}_power").state == "0.0"
-    assert sensor_state(hass, f"{PANEL_1}_voltage").state == STATE_UNAVAILABLE
+    assert sensor_state(hass, DEVICE_POWER).state == STATE_UNAVAILABLE
+    assert sensor_state(hass, f"{PANEL_1}_power").state == STATE_UNAVAILABLE
 
 
 # --- 4: a lasting reset of the total is taken over ---
