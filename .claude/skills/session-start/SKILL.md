@@ -22,7 +22,7 @@ Die neue Session kennt nur, was im Repository und in den Memories steht. Erst le
    git stash list
    ```
 
-5. **Fehlt eine der Dateien in `local/`** (Handover, offene Entscheidungen, Briefing), ist das der erste Punkt im Bericht: Sie sind nicht eingecheckt (siehe `CLAUDE.md`, „Projektunterlagen nur lokal“). Kam eine neue Vorgabe des Projekts (Schritt 3a), mit Handover und Code abgleichen und Widersprüche im Bericht nennen.
+5. **Fehlt eine der Dateien in `local/`** (Handover, offene Entscheidungen, Schnittstelle Energie-Setup), ist das der erste Punkt im Bericht: Sie sind nicht eingecheckt (siehe `CLAUDE.md`, „Projektunterlagen nur lokal“). Kam eine neue Vorgabe des Projekts (Schritt 3a), mit Handover und Code abgleichen und Widersprüche im Bericht nennen.
 
 ## 2. Abgleichen
 
@@ -49,7 +49,7 @@ Diese Kennung gilt für die ganze Session. Der Skill `handover-pflegen` braucht 
 Kurz und auf Deutsch, höchstens etwa zehn Zeilen:
 
 - Session-Kennung
-- wo wir stehen (Schritt laut Briefing, letzter Commit)
+- wo wir stehen (Schritt laut Statusübersicht im Handover, letzter Commit)
 - was laut Handover als Nächstes kommt
 - was auf Michael wartet: offene Entscheidungen, deren Zeitpunkt gekommen ist; ungepushte Commits (Push nur mit OK)
 - Auffälligkeiten aus dem Abgleich (veraltetes Handover, halbfertige Arbeit, rote Tests)

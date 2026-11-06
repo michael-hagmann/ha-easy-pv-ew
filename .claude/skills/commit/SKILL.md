@@ -32,7 +32,7 @@ Nichts davon darf im Diff stehen, auch nicht in Tests, Fixtures, Kommentaren ode
 - echte Seriennummern, Geräte- oder Stations-IDs, Standort, Adresse, Koordinaten, Kontoname, E-Mail
 - Benutzernamen und persönliche Pfade des Entwicklungsrechners, z. B. unter `C:\Users\…`, `/mnt/c/Users/…` oder `/home/…` (in Beispielen `<Benutzername>`)
 - Dateien aus `config/` außer `config/configuration.yaml`
-- Dateien aus `local/` (OpenAPI-Beschreibung, Briefing, Handover, offene Entscheidungen, Austauschregeln); die Adresse der Beschreibung darf stehen (`openapi_url` im Vertrag)
+- Dateien aus `local/` (OpenAPI-Beschreibung, Schnittstelle, Referenz, Handover, offene Entscheidungen, Austauschregeln); die Adresse der Beschreibung darf stehen (`openapi_url` im Vertrag)
 
 Bei Fixtures aus echten Antworten vorher den Skill `fixture-anonymisieren` anwenden.
 
@@ -42,7 +42,7 @@ Bei Fixtures aus echten Antworten vorher den Skill `fixture-anonymisieren` anwen
 
 ## 4. Commit-Nachricht
 
-- Deutsch, erste Zeile kurz und konkret (was und warum, Bezug zum Briefing wie „(Fehler 3)“).
+- Deutsch, erste Zeile kurz und konkret (was und warum, gern mit Bezug wie „(Fehler 3)“ oder „(Schritt 7)“).
 - Danach eine Liste der wesentlichen Änderungen, gern mit Begründung bei nicht offensichtlichen Entscheidungen.
 - Schluss mit der Attribution-Zeile aus dem System-Reminder der Session (aktuell `Co-Authored-By: Claude …`).
 

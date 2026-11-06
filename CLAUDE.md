@@ -2,23 +2,27 @@
 
 Home-Assistant-Integration für den Balkonkraftwerk-Wechselrichter Electronic Way (EW) VN2T08EU über die Easy-PV-Cloud.
 
-**Zuständigkeiten:** Regeln und Entscheidungen, die nur den Code betreffen, führt diese Session (diese Datei, Skills, `local/offene-entscheidungen.md`). Vorgaben zur Nutzung der Integration in Michaels HA (Energie-Setup, Entity-IDs, Installation, Korrekturfaktor) führt das claude.ai-Projekt „HA PV Konfiguration“; bis seine schlanke Fassung vorliegt, gilt dafür die Kurzfassung unten („Schnittstelle zum Energie-Setup“). Widerspricht eine Vorgabe des Projekts dem Code: bei Michael nachfragen, nicht selbst auflösen.
+**Zuständigkeiten:** Regeln und Entscheidungen, die nur den Code betreffen, führt diese Session (diese Datei, Skills, `local/offene-entscheidungen.md`). Vorgaben zur Nutzung der Integration in Michaels HA (Energie-Setup, Entity-IDs, Installation, Korrekturfaktor) führt das claude.ai-Projekt „HA PV Konfiguration“ in der „Schnittstelle Energie-Setup“ (lokale Kopie `local/schnittstelle-energie-setup.md`, wird unten importiert; fehlt sie, gilt die Kurzfassung „Schnittstelle zum Energie-Setup“ unten). Widerspricht eine Vorgabe des Projekts dem Code: bei Michael nachfragen, nicht selbst auflösen.
 
-- `local/briefing-ew.md` ist die frühere Auftragsbeschreibung des Projekts, nur noch zum **Nachschlagen**, nicht automatisch geladen: Gerätewissen, Auszug „Schnittstelle laut OpenAPI“, Rückfallebene MQTT, Quellen, Hintergrund zum Energie-Setup. Nicht selbst inhaltlich ändern.
+- `local/referenz.md` zum **Nachschlagen**, nicht automatisch geladen: Gerätewissen, Auszug „Schnittstelle laut OpenAPI“, Rückfallebene MQTT, Quellen.
+- Das frühere Briefing des Projekts ist abgeschlossen und liegt in `local/archiv/`.
 
+@local/schnittstelle-energie-setup.md
 @local/austausch.md
 
 ## Projektunterlagen nur lokal
 
-Briefing, Handover, offene Entscheidungen und Austauschregeln betreffen Michaels Entwicklungsstand und kommen **nicht ins öffentliche Repository**. Sie liegen in `local/` (in `.gitignore`, im Container-Volume, übersteht einen Rebuild):
+Schnittstelle, Handover, offene Entscheidungen, Referenz und Austauschregeln betreffen Michaels Entwicklungsstand und kommen **nicht ins öffentliche Repository**. Sie liegen in `local/` (in `.gitignore`, im Container-Volume, übersteht einen Rebuild):
 
-- `local/briefing-ew.md`: frühere Auftragsbeschreibung, zum Nachschlagen
+- `local/schnittstelle-energie-setup.md`: Kopie der Vorgaben des Projekts zur Nutzung in HA (führend im Projekt, nicht selbst ändern)
+- `local/referenz.md`: Nachschlagewerk der Code-Sitzung
+- `local/archiv/`: abgeschlossene Unterlagen (Briefing)
 - `local/HANDOVER.md`: Übergabe an die nächste Session
 - `local/handover-archiv/`: Endstände früherer Sessions
 - `local/offene-entscheidungen.md`: Entscheidungen, die Michael noch treffen muss, und getroffene
 - `local/austausch.md`: Regeln der Code-Sitzung für den Austauschordner zum claude.ai-Projekt
 
-Git sichert und versioniert diese Dateien nicht. Fehlt eine davon (neues Volume, frischer Klon), Michael Bescheid sagen; das Briefing gibt es auch im claude.ai-Projekt. Ältere Fassungen bis 04.11.2026 lagen unter `docs/`; seit dem Umschreiben der Historie sind sie nur noch in verwaisten Commits auf GitHub über deren SHA abrufbar (bekannt und so gewollt).
+Git sichert und versioniert diese Dateien nicht. Fehlt eine davon (neues Volume, frischer Klon), Michael Bescheid sagen; die Schnittstelle gibt es auch im claude.ai-Projekt. Ältere Fassungen bis 04.11.2026 lagen unter `docs/`; seit dem Umschreiben der Historie sind sie nur noch in verwaisten Commits auf GitHub über deren SHA abrufbar (bekannt und so gewollt).
 
 ## Arbeit über mehrere Sessions
 
@@ -46,7 +50,7 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 - **Abrufintervall nie unter 60 s**, auch nicht als einstellbare Option; keine Abfragen außerhalb des normalen Betriebs.
 - **Die OpenAPI-Beschreibung des Herstellers kommt nie ins Repository** (der Fork ist öffentlich, die Beschreibung ist eine interne Unterlage des Herstellers). Fassungen liegen nur lokal als `local/openapi/easy-pv-JJJJ-MM-TT.json` (`local/` steht in `.gitignore`); vor jedem Commit prüfen, dass nichts aus `local/` gestaged ist. Auch keine Auszüge daraus in Code, Tests, Kommentare oder Commit-Nachrichten, die der Code nicht braucht. Die **Adresse** der Beschreibung ist kein Geheimnis und steht als `openapi_url` in `tests/api_contract.yaml`.
 - **Die Beschreibung nie automatisch herunterladen**, auch nicht per Skript oder `WebFetch`: Der Server verbietet es per `robots.txt`. Neue Fassungen holt Michael von Hand im Browser.
-- **Referenz für API-Fragen:** Existiert `local/openapi/`, gilt dort die neueste Datei (nach Datum im Namen). Fehlt sie, gilt der Auszug „Schnittstelle laut OpenAPI“ im Briefing. Maßgeblich für den Code ist der Schnittstellenvertrag `tests/api_contract.yaml` (nur, was der Code liest); Abweichungen meldet `scripts/check_api`.
+- **Referenz für API-Fragen:** Existiert `local/openapi/`, gilt dort die neueste Datei (nach Datum im Namen). Fehlt sie, gilt der Auszug „Schnittstelle laut OpenAPI“ in `local/referenz.md`. Maßgeblich für den Code ist der Schnittstellenvertrag `tests/api_contract.yaml` (nur, was der Code liest); Abweichungen meldet `scripts/check_api`.
 - Zugangsdaten der Easy-PV-App gibt Michael selbst in HA ein. Nie im Chat erfragen, nie in Code, Tests, Fixtures oder Logs ablegen. Rohantworten für Fixtures anonymisieren (Seriennummern, Standort, Konto).
 - `config/` enthält Laufzeitdaten der Test-Instanz und gehört nicht ins Repository, ausgenommen `config/configuration.yaml`.
 - Entwickelt und getestet wird im Devcontainer gegen die dortige Test-Instanz (siehe „Umgebung“). Die produktive HA-Instanz wird nicht angefasst.
@@ -92,4 +96,4 @@ Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcon
 - Um Mitternacht (Zeitzone der Station, `timeZone`) meldet die Cloud einige Minuten falsche Zähler (Station minus Tagesertrag, Monat 0) und danach den Stationszähler 0,01 kWh zu niedrig. Stationszähler übernimmt nie einen kleineren Wert, Gerätezähler erst nach 24 Stunden, Ertrag Monat nur am Monatsersten oder nach einem Monatswechsel.
 - Bei Cloud-Ausfall lieber `unavailable` als falsche Werte.
 
-Begründungen in `local/offene-entscheidungen.md`, Hintergrund im Briefing.
+Rückfall für frische Klone; maßgeblich ist die Schnittstelle des Projekts. Begründungen in `local/offene-entscheidungen.md`.

@@ -1,6 +1,6 @@
 ---
 name: ha-testinstanz
-description: Die Home-Assistant-Test-Instanz im Devcontainer starten, neu starten und ihr Log auswerten, um die Integration mit echten Daten zu prüfen. Verwenden für Schritt 7 des Briefings, für „starte HA“, „schau ins Log“ oder um eine Änderung in der laufenden Instanz zu prüfen.
+description: Die Home-Assistant-Test-Instanz im Devcontainer starten, neu starten und ihr Log auswerten, um die Integration mit echten Daten zu prüfen. Verwenden für den Test mit echten Daten (Schritt 7), für „starte HA“, „schau ins Log“ oder um eine Änderung in der laufenden Instanz zu prüfen.
 ---
 
 # HA-Test-Instanz

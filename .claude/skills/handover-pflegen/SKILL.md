@@ -37,7 +37,7 @@ Für jede Zeile gilt: **Braucht die nächste Session das, um sicher weiterzuarbe
 Struktur:
 
 - **Kopf:** `**Session:**` (siehe oben) und `**Aktualisiert:**` mit Datum und Uhrzeit.
-- **Wo wir stehen:** die Schritte laut Briefing als kompakte Statusübersicht; Details nur für den laufenden Schritt.
+- **Wo wir stehen:** die Schritte als kompakte Statusübersicht; Details nur für den laufenden Schritt.
 - **Nächster Schritt:** so konkret, dass die nächste Session ohne Rückfrage anfangen kann (Datei, Ziel, offene Teilaufgabe). Bei halbfertiger Arbeit: was schon steht und was fehlt.
 - **Offene Fragen und Annahmen**, die die anstehende Arbeit betreffen.
 - **Hinweise:** ungepushte Commits, einmalige Fallstricke für die nächste Session.
