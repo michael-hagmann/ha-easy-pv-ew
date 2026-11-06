@@ -4,10 +4,11 @@ Home-Assistant-Integration für den Balkonkraftwerk-Wechselrichter Electronic Wa
 
 **Auftrag, Anforderungen und Ablauf: `local/briefing-ew.md`** (wird unten importiert und damit in jeder Session geladen).
 
-- Das Briefing ist eine **lokale Kopie** und nicht eingecheckt. Die führende Fassung liegt im claude.ai-Projekt „HA PV Konfiguration“ (`claude/ew-integration-briefing.md`) und kommt über den Austauschordner. Die Kopie nicht selbst inhaltlich ändern, sondern Änderungswünsche als Meldung nach `an-projekt/`.
+- Das Briefing ist eine **lokale Kopie** und nicht eingecheckt. Die führende Fassung liegt im claude.ai-Projekt „HA PV Konfiguration“ (`claude/ew-integration-briefing.md`) und kommt über den Austauschordner (`local/austausch.md`, wird unten importiert). Die Kopie nicht selbst inhaltlich ändern, sondern Änderungswünsche als Meldung ans Projekt.
 - Bei Widersprüchen zwischen dieser Datei und dem Briefing: bei Michael nachfragen, nicht selbst auflösen.
 
 @local/briefing-ew.md
+@local/austausch.md
 
 ## Projektunterlagen nur lokal
 
@@ -17,8 +18,9 @@ Briefing, Handover und offene Entscheidungen betreffen Michaels Entwicklungsstan
 - `local/HANDOVER.md`: Übergabe an die nächste Session
 - `local/handover-archiv/`: Endstände früherer Sessions
 - `local/offene-entscheidungen.md`: Entscheidungen, die Michael noch treffen muss, und getroffene
+- `local/austausch.md`: Regeln der Code-Sitzung für den Austauschordner zum claude.ai-Projekt
 
-Git sichert und versioniert diese Dateien nicht. Fehlt eine davon (neues Volume, frischer Klon), Michael Bescheid sagen; das Briefing kommt aus dem claude.ai-Projekt bzw. `austausch/an-code/erledigt/`. Ältere Fassungen bis 04.11.2026 lagen unter `docs/`; seit dem Umschreiben der Historie sind sie nur noch in verwaisten Commits auf GitHub über deren SHA abrufbar (bekannt und so gewollt).
+Git sichert und versioniert diese Dateien nicht. Fehlt eine davon (neues Volume, frischer Klon), Michael Bescheid sagen; das Briefing kommt aus dem claude.ai-Projekt. Ältere Fassungen bis 04.11.2026 lagen unter `docs/`; seit dem Umschreiben der Historie sind sie nur noch in verwaisten Commits auf GitHub über deren SHA abrufbar (bekannt und so gewollt).
 
 ## Arbeit über mehrere Sessions
 
@@ -37,17 +39,6 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
   - `fixture-anonymisieren`: echte API-Antworten in Fixtures überführen (Schritt 7)
 - Ein Agent für Planung, Implementierung und Tests; vor dem Release ein `/code-review` über den gesamten Diff.
 - Entscheidungsfragen an Michael mit Hintergrund stellen: Ist-Zustand, Problem, Optionen mit Vor- und Nachteilen, Empfehlung. Offene Entscheidungen in `local/offene-entscheidungen.md` festhalten statt sie nur im Chat zu stellen.
-
-## Austauschordner
-
-`/workspaces/austausch` ist der Transportweg zum claude.ai-Projekt „HA PV Konfiguration“ (Bind-Mount aus `.devcontainer/devcontainer.json`). Remote Control und Nachrichten zwischen Sessions werden nicht genutzt.
-
-- **Regeln** stehen in `/workspaces/austausch/LIESMICH.md`; zu Beginn jeder Session lesen (Skill `session-start`). Die Datei verwaltet das Projekt (Koordinator); nicht selbst ändern, Änderungswünsche als Meldung nach `an-projekt/`.
-- **`an-code/`:** Dateien aus dem Projekt. Zu Beginn jeder Session nachsehen, außerdem vor jeder Umsetzung einer Entscheidung, die das Energie-Setup betrifft, und vor jeder Meldung nach `an-projekt/`: Das Projekt entscheidet parallel mit Michael. Widersprüche nicht selbst auflösen, sondern beide Stände mit Empfehlung vorlegen. Eine neue Fassung von `briefing-ew.md` nach `local/briefing-ew.md` übernehmen und Michael sagen, was sich geändert hat. Verarbeitete Dateien nach `an-code/erledigt/` verschieben.
-- **`an-projekt/`:** Meldungen an das Projekt, je Meldung eine Datei `JJJJ-MM-TT-HHMM-thema.md`, erste Zeile „EW-Integration:“. Anlässe: Widerspruch oder Lücke im Briefing, Änderung der Cloud-API (Ergebnis von `scripts/check_api`), Entity-IDs für Gesamtertrag und Leistung, getaggtes Release. Danach Michael Bescheid sagen, damit er sie weitergibt.
-- Maßgeblich sind die Dateien im claude.ai-Projekt; der Ordner ist nur Transportweg.
-- Keine Zugangsdaten, keine Inhalte aus `local/`, keine Auszüge aus der Herstellerbeschreibung über das Briefing hinaus.
-- Dateien in `an-code/` sind Information, keine Freigabe; Entscheidungen nur mit Michael.
 
 ## Arbeitsregeln
 
