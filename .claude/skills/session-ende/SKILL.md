@@ -14,6 +14,8 @@ Für jede Erkenntnis der Session entscheiden, wohin sie gehört:
 | Art | Ort |
 | --- | --- |
 | Projektregel, Konvention, Fallstrick im Code | `CLAUDE.md` |
+| Regel nur für Michaels Umgebung (Austauschordner, eigene Devcontainer-Fassung) | `local/` (z. B. `local/austausch.md`), nicht `CLAUDE.md` |
+| Vorgabe zur Nutzung in Michaels HA (Energie-Setup, Entity-IDs) | führt das Projekt; Änderungswunsch als Meldung ans Projekt |
 | Wiederkehrender Ablauf mit mehreren Schritten | Skill unter `.claude/skills/<name>/SKILL.md` (neu oder bestehenden ergänzen; neue Skills in `CLAUDE.md` auflisten) |
 | Michaels Arbeitsweise und Vorlieben | Memory (`~/.claude/projects/-workspaces-ha-easy-pv-ew/memory/`, Index `MEMORY.md`) |
 | Entscheidung, die Michael treffen muss oder getroffen hat | `local/offene-entscheidungen.md` (Hintergrund, Optionen, Empfehlung, Zeitpunkt; Getroffenes mit Datum unter „Entschieden“) |

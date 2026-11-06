@@ -42,11 +42,12 @@ HA lädt Python-Code nicht neu. Prozess beenden (`pkill -f "hass --config"`; der
 - Vor einem Neustart `config/home-assistant.log` nach `local/logs/` kopieren. Auswerteskripte (nicht eingecheckt, falls vorhanden) liegen in `local/tools/`.
 - Das Log kann Kontodaten enthalten. Vor dem Zitieren im Chat Seriennummern, IDs, Ort und Konto unkenntlich machen. Für Fixtures den Skill `fixture-anonymisieren` verwenden.
 
-## Prüfen für Schritt 7
+## Prüfen mit echten Daten
 
-Geprüft am 05.11.2026: Einheiten (alles kWh bzw. W), Gesamtzähler je Gerät und Station, Takt (Leistung jede Minute, Zähler etwa alle 5 Minuten in Schritten von 0,01 kWh). Weiter beobachten:
+Was gerade zu beobachten ist, steht im Handover („Nächster Schritt“). Allgemein:
 
-- Nacht und Tageswechsel (erste Nacht 05./06.11.2026 ausgewertet, siehe `CLAUDE.md`, „Schnittstelle zum Energie-Setup“): weiter auf Abweichungen achten, z. B. Monatswechsel am 01.12.
-- kleinere Werte bei den Zählern: Debug „Cloud reports a lower energy_total/energy_month“; Warnung erst, wenn der Stationszähler einen Tag lang kleiner ist oder der Gerätezähler nach 24 Stunden übernommen wird
-- Token-Ablauf (Einrichtung 05.11.2026 11:18 UTC, siehe `local/offene-entscheidungen.md`)
-- Entity-IDs der Sensoren für Gesamtertrag und Leistung notieren (Übergabe an „HA PV Konfiguration“)
+- Einheiten (kWh, W) und Takt der Werte gegen die Easy-PV-App
+- Nacht und Tageswechsel in der Zeitzone der Station: Zähler ohne Rücksprung, Leistung nachts `unavailable` (siehe `CLAUDE.md`, „Schnittstelle zum Energie-Setup“)
+- kleinere Werte bei den Zählern: Debug „Cloud reports a lower energy_total/energy_month“; Warnungen „lower total energy of the station“ oder „of the inverter“
+- Token-Ablauf: Reauth-Meldung in HA, Rohantwort der Ablehnung (siehe `local/offene-entscheidungen.md`)
+- Entity-IDs der Sensoren für Gesamtertrag und Leistung notieren (Übergabe ans Projekt)

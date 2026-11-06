@@ -12,7 +12,7 @@ Die neue Session kennt nur, was im Repository und in den Memories steht. Erst le
 1. **Memories:** Das Verzeichnis `~/.claude/projects/-workspaces-ha-easy-pv-ew/memory/` mit `MEMORY.md` und den verlinkten Dateien. Ist es leer (z. B. nach einem Rebuild ohne Volume), das im Bericht erwähnen; die Arbeitsregeln stehen auch in `CLAUDE.md`.
 2. **Handover:** `local/HANDOVER.md`, vollständig.
 3. **Offene Entscheidungen:** `local/offene-entscheidungen.md`.
-3a. **Austauschordner** (nur wenn `local/austausch.md` existiert, Regeln dort): `/workspaces/austausch/LIESMICH.md` lesen und `an-code/` ansehen, neue Dateien nach den Regeln abarbeiten. Fehlt der Ordner, fehlt der Mount; das im Bericht nennen.
+3a. **Austauschordner** (Regeln in `local/austausch.md`): Existiert `/workspaces/austausch`, `LIESMICH.md` lesen und `an-code/` ansehen, neue Dateien nach den Regeln abarbeiten. Existiert nur der Ordner oder nur `local/austausch.md`, das im Bericht nennen (Mount oder lokale Datei fehlt). Fehlt beides, ist es keine Umgebung mit Austauschordner.
 4. **Git-Stand:**
 
    ```bash
@@ -22,7 +22,7 @@ Die neue Session kennt nur, was im Repository und in den Memories steht. Erst le
    git stash list
    ```
 
-5. Das Briefing (`local/briefing-ew.md`) wird über `CLAUDE.md` automatisch geladen. **Fehlt eine der Dateien in `local/`** (Briefing, Handover, offene Entscheidungen), ist das der erste Punkt im Bericht: Sie sind nicht eingecheckt (siehe `CLAUDE.md`, „Projektunterlagen nur lokal“). Ist das Briefing neuer als das Handover (`ls -l --time-style=+%F_%H%M local/*.md`), mit Handover und Code abgleichen und Widersprüche im Bericht nennen.
+5. **Fehlt eine der Dateien in `local/`** (Handover, offene Entscheidungen, Briefing), ist das der erste Punkt im Bericht: Sie sind nicht eingecheckt (siehe `CLAUDE.md`, „Projektunterlagen nur lokal“). Kam eine neue Vorgabe des Projekts (Schritt 3a), mit Handover und Code abgleichen und Widersprüche im Bericht nennen.
 
 ## 2. Abgleichen
 

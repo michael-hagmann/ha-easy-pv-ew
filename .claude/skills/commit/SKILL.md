@@ -12,7 +12,7 @@ Ablauf für jeden Commit in diesem Repository. Committen darf ohne Rückfrage er
 ```bash
 scripts/lint    # formatiert und korrigiert; danach muss "All checks passed!" kommen
 scripts/test
-git config user.email   # muss die Noreply-Adresse aus CLAUDE.md sein, nie eine private
+git config --local user.email   # muss eine GitHub-Noreply-Adresse sein (CLAUDE.md, „Commit-Adresse“), nie eine private
 ```
 
 Die Ausgabe **nicht** durch eine Pipe schicken (`scripts/lint | tail`) und nicht mit `&&` an `git commit` hängen: Die Pipe übernimmt den Exit-Code von `tail`, ein Lint-Fehler fällt dann nicht auf. Ist die Ausgabe zu lang, mit `set -o pipefail` arbeiten.
@@ -32,7 +32,7 @@ Nichts davon darf im Diff stehen, auch nicht in Tests, Fixtures, Kommentaren ode
 - echte Seriennummern, Geräte- oder Stations-IDs, Standort, Adresse, Koordinaten, Kontoname, E-Mail
 - Benutzernamen und persönliche Pfade des Entwicklungsrechners, z. B. unter `C:\Users\…`, `/mnt/c/Users/…` oder `/home/…` (in Beispielen `<Benutzername>`)
 - Dateien aus `config/` außer `config/configuration.yaml`
-- Dateien aus `local/` (OpenAPI-Beschreibung, Briefing, Handover, offene Entscheidungen); die Adresse der Beschreibung darf stehen (`openapi_url` im Vertrag)
+- Dateien aus `local/` (OpenAPI-Beschreibung, Briefing, Handover, offene Entscheidungen, Austauschregeln); die Adresse der Beschreibung darf stehen (`openapi_url` im Vertrag)
 
 Bei Fixtures aus echten Antworten vorher den Skill `fixture-anonymisieren` anwenden.
 

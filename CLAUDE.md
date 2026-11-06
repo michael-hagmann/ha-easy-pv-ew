@@ -2,25 +2,23 @@
 
 Home-Assistant-Integration für den Balkonkraftwerk-Wechselrichter Electronic Way (EW) VN2T08EU über die Easy-PV-Cloud.
 
-**Auftrag, Anforderungen und Ablauf: `local/briefing-ew.md`** (wird unten importiert und damit in jeder Session geladen).
+**Zuständigkeiten:** Regeln und Entscheidungen, die nur den Code betreffen, führt diese Session (diese Datei, Skills, `local/offene-entscheidungen.md`). Vorgaben zur Nutzung der Integration in Michaels HA (Energie-Setup, Entity-IDs, Installation, Korrekturfaktor) führt das claude.ai-Projekt „HA PV Konfiguration“; bis seine schlanke Fassung vorliegt, gilt dafür die Kurzfassung unten („Schnittstelle zum Energie-Setup“). Widerspricht eine Vorgabe des Projekts dem Code: bei Michael nachfragen, nicht selbst auflösen.
 
-- Das Briefing ist eine **lokale Kopie** und nicht eingecheckt. Die führende Fassung liegt im claude.ai-Projekt „HA PV Konfiguration“ (`claude/ew-integration-briefing.md`) und kommt über den Austauschordner (`local/austausch.md`, wird unten importiert). Die Kopie nicht selbst inhaltlich ändern, sondern Änderungswünsche als Meldung ans Projekt.
-- Bei Widersprüchen zwischen dieser Datei und dem Briefing: bei Michael nachfragen, nicht selbst auflösen.
+- `local/briefing-ew.md` ist die frühere Auftragsbeschreibung des Projekts, nur noch zum **Nachschlagen**, nicht automatisch geladen: Gerätewissen, Auszug „Schnittstelle laut OpenAPI“, Rückfallebene MQTT, Quellen, Hintergrund zum Energie-Setup. Nicht selbst inhaltlich ändern.
 
-@local/briefing-ew.md
 @local/austausch.md
 
 ## Projektunterlagen nur lokal
 
-Briefing, Handover und offene Entscheidungen betreffen Michaels Entwicklungsstand und kommen **nicht ins öffentliche Repository**. Sie liegen in `local/` (in `.gitignore`, im Container-Volume, übersteht einen Rebuild):
+Briefing, Handover, offene Entscheidungen und Austauschregeln betreffen Michaels Entwicklungsstand und kommen **nicht ins öffentliche Repository**. Sie liegen in `local/` (in `.gitignore`, im Container-Volume, übersteht einen Rebuild):
 
-- `local/briefing-ew.md`: Kopie des Briefings
+- `local/briefing-ew.md`: frühere Auftragsbeschreibung, zum Nachschlagen
 - `local/HANDOVER.md`: Übergabe an die nächste Session
 - `local/handover-archiv/`: Endstände früherer Sessions
 - `local/offene-entscheidungen.md`: Entscheidungen, die Michael noch treffen muss, und getroffene
 - `local/austausch.md`: Regeln der Code-Sitzung für den Austauschordner zum claude.ai-Projekt
 
-Git sichert und versioniert diese Dateien nicht. Fehlt eine davon (neues Volume, frischer Klon), Michael Bescheid sagen; das Briefing kommt aus dem claude.ai-Projekt. Ältere Fassungen bis 04.11.2026 lagen unter `docs/`; seit dem Umschreiben der Historie sind sie nur noch in verwaisten Commits auf GitHub über deren SHA abrufbar (bekannt und so gewollt).
+Git sichert und versioniert diese Dateien nicht. Fehlt eine davon (neues Volume, frischer Klon), Michael Bescheid sagen; das Briefing gibt es auch im claude.ai-Projekt. Ältere Fassungen bis 04.11.2026 lagen unter `docs/`; seit dem Umschreiben der Historie sind sie nur noch in verwaisten Commits auf GitHub über deren SHA abrufbar (bekannt und so gewollt).
 
 ## Arbeit über mehrere Sessions
 
@@ -29,7 +27,7 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
 - **Zu Beginn jeder Session** den Skill `session-start` anwenden, bevor an Code gearbeitet wird: Memories, `local/HANDOVER.md`, `local/offene-entscheidungen.md` und Git-Log lesen, abgleichen, Session-Kennung festlegen.
 - **Während der Session** das Handover laufend pflegen (Skill `handover-pflegen`, bei jedem Commit über `commit`; es wird nicht mitcommittet), damit es auch bei einem unerwarteten Ende aktuell ist. Bei der ersten Änderung in einer neuen Session wird der Stand der Vorsession nach `local/handover-archiv/` archiviert. Das Handover enthält nur, was die nächste Session braucht.
 - **Am Ende einer Session** oder bei vollem Kontext den Skill `session-ende` anwenden, um Wissen einzuordnen und das Handover aufzuräumen.
-- Dauerhaftes Wissen gehört in diese Datei, die Skills oder die lokalen Projektunterlagen, nicht nur in Memories. `~/.claude` liegt erst seit dem Volume in `.devcontainer/devcontainer.json` außerhalb des Containers.
+- Dauerhaftes Wissen gehört in diese Datei, die Skills oder die lokalen Projektunterlagen, nicht nur in Memories. Was nur für Michaels Umgebung gilt (Austauschordner, eigene Devcontainer-Fassung), gehört nach `local/`, nicht in diese öffentliche Datei.
 - Wiederkehrende Abläufe als Skill unter `.claude/skills/` ablegen. Vorhanden:
   - `session-start`: Einstieg in eine Session, Stand abgleichen und berichten
   - `commit`: Lint, Tests, Prüfung auf vertrauliche Daten, Commit-Nachricht
@@ -62,7 +60,7 @@ Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcon
 - **Repository** unter `/workspaces/ha-easy-pv-ew`, am besten auf einem Container-Volume statt in einem eingebundenen Host-Ordner (deutlich schneller, vor allem unter Windows).
 - **Kein Zugriff** auf die produktive HA-Instanz oder das Heimnetz nötig, und so ist es gewollt. Gebraucht wird nur Internetzugang zur Easy-PV-Cloud.
 - **Test-Instanz:** HA im Container auf Port 8123, VS Code leitet den Port an den Host weiter.
-- **Commit-Adresse:** nur die GitHub-Noreply-Adresse (`94895859+michael-hagmann@users.noreply.github.com`), eingestellt per `git config user.email` im Repository (nicht global: VS Code übernimmt `~/.gitconfig` vom Host, die dort eingetragene private Adresse darf nicht in Commits landen).
+- **Commit-Adresse:** nie eine private E-Mail-Adresse, sondern die GitHub-Noreply-Adresse des eigenen Kontos, eingestellt per `git config user.email` im Repository (nicht global: VS Code übernimmt `~/.gitconfig` vom Host). Ist im Repository keine gesetzt, vor dem Commit nachfragen statt eine einzutragen.
 - **Git push** läuft über den Credential-Helper von VS Code und funktioniert nur, solange VS Code mit dem Container verbunden ist. `gh` ist nicht installiert.
 - **Rebuild** des Containers (nach Änderungen an `devcontainer.json`) verwirft alles außerhalb von `/workspaces` und den Volumes: installierte Pakete, Shell-Verlauf. `~/.claude` (Login, Memories) liegt auf einem eigenen Volume. Ein Rebuild ist ein Schritt außerhalb des Repositorys und braucht Michaels OK; er löst ihn selbst in VS Code aus.
 - **Cloud-Adresse und DNS:** `inverter-en.easycharging-tech.com` ist ein CNAME auf ein CDN (Alibaba, `*.w.cdngslb.com`), dessen Adressen nur 60 s gelten. Die geteilte HA-Session hält DNS-Cache und Verbindung kürzer, also wird bei jedem Abruf neu aufgelöst. Gelegentliche DNS- oder Verbindungs-Timeouts sind deshalb zu erwarten und kein Fehler der Integration.
@@ -84,7 +82,7 @@ Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcon
 - Fehlertypen des Clients: `LoginError` (Anmeldung/Token) → im Coordinator `ConfigEntryAuthFailed`; alle anderen `BaseError` (`ApiError`, `InvalidResponseError`, `CommunicationError` für Netzwerk/DNS/Timeout) → `UpdateFailed`. `LoginError` nie unterwegs abfangen oder in `UpdateFailed` umwandeln, sonst startet kein Reauth.
 - Nie Tokens, E-Mail, Seriennummern, IDs oder Standort loggen, auch nicht auf Debug. Auch `productCode` nicht: Bei echten Geräten trägt er einen gerätebezogenen Zusatz (`VN2T08EU-<code>`), der Teil der Seriennummer sein kann; er steht deshalb auch im Gerätenamen und in den Entity-IDs des Geräts. Der Debug-Logger der Integration ist in der Test-Instanz aktiv. Rohantworten nur anonymisiert loggen.
 - Tests: Fixtures in `tests/fixtures/` (nachgebaut bzw. anonymisiert, feste Platzhalter wie `test-token`, Station `1001`, Gerät `2001`). Messwerte in Fixtures dürfen keinem Platzhalter gleichen (z. B. Frequenz 49.98 statt 50.0, weil der Breitengrad 50.0 ist), sonst schlagen die Anonymisierungstests fehl. Dasselbe gilt für Zeitstempel: Mikrosekunden können zufällig einen Platzhalter enthalten (`…12.100123` enthält `1001`); in Leck-Tests feste Zeiten setzen. HTTP über `aioclient_mock`; die Fixture `mock_api` in `tests/conftest.py` registriert alle Endpunkte erfolgreich. `*_real.json` sind anonymisierte echte Antworten (Typen und `null`-Felder wie in der Cloud), die übrigen Fixtures füllen alle Felder. Standardmäßig deaktivierte Entitäten (Temperatur, Frequenz je Eingang) brauchen in Tests die Fixture `enable_all_entities` vor `setup_integration`.
-- Für jede Fehlerbehebung aus dem Briefing einen Test, der den Fehler zeigt.
+- Für jede Fehlerbehebung einen Test, der den Fehler zeigt.
 
 ## Schnittstelle zum Energie-Setup (Kurzfassung)
 
@@ -94,4 +92,4 @@ Claude läuft als VS-Code-Erweiterung **im Devcontainer** (`.devcontainer/devcon
 - Um Mitternacht (Zeitzone der Station, `timeZone`) meldet die Cloud einige Minuten falsche Zähler (Station minus Tagesertrag, Monat 0) und danach den Stationszähler 0,01 kWh zu niedrig. Stationszähler übernimmt nie einen kleineren Wert, Gerätezähler erst nach 24 Stunden, Ertrag Monat nur am Monatsersten oder nach einem Monatswechsel.
 - Bei Cloud-Ausfall lieber `unavailable` als falsche Werte.
 
-Hintergrund und Begründungen im Briefing und in `local/offene-entscheidungen.md`.
+Begründungen in `local/offene-entscheidungen.md`, Hintergrund im Briefing.

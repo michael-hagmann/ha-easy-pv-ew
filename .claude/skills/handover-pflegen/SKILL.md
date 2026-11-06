@@ -7,7 +7,7 @@ description: local/HANDOVER.md laufend aktuell halten und beim ersten Ändern in
 
 Das Handover ist zu jedem Zeitpunkt die Übergabe an die nächste Session. Endet eine Session unerwartet (voller Kontext, Fenster zu, Rebuild), ist es höchstens einen Commit alt.
 
-Handover und Archiv liegen in `local/` und sind **nicht eingecheckt** (siehe `CLAUDE.md`, „Projektunterlagen nur lokal“). Nie nach `docs/` oder an einen anderen eingecheckten Ort schreiben.
+Handover und Archiv liegen in `local/` und sind **nicht eingecheckt** (siehe `CLAUDE.md`, „Projektunterlagen nur lokal“). Nie an einen eingecheckten Ort schreiben.
 
 ## 1. Archivieren, falls neue Session
 
