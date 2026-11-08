@@ -39,3 +39,14 @@ def test_hacs_json_has_only_valid_keys() -> None:
     }
     assert set(data) <= allowed
     assert data["name"] == "Easy PV (EW)"
+
+
+def test_manifest_keys_sorted() -> None:
+    """Hassfest wants domain, name, then the other keys in alphabetical order."""
+    manifest = (
+        Path(__file__).parent.parent / "custom_components/easy_pv_ew/manifest.json"
+    )
+    keys = list(json.loads(manifest.read_text()))
+
+    assert keys[:2] == ["domain", "name"]
+    assert keys[2:] == sorted(keys[2:])
