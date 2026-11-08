@@ -39,6 +39,7 @@ Michael arbeitet in mehreren Claude-Sessions, damit der Kontext sauber bleibt.
   - `session-ende`: Wissen einordnen, Handover aufräumen
   - `ha-testinstanz`: Test-Instanz starten, Log auswerten (Schritt 7)
   - `fixture-anonymisieren`: echte API-Antworten in Fixtures überführen (Schritt 7)
+  - `release`: Version, Tag, Prüfung auf GitHub, Release, Meldung ans Projekt
 - Ein Agent für Planung, Implementierung und Tests; vor dem Release ein `/code-review` über den gesamten Diff.
 - Entscheidungsfragen an Michael mit Hintergrund stellen: Ist-Zustand, Problem, Optionen mit Vor- und Nachteilen, Empfehlung. Offene Entscheidungen in `local/offene-entscheidungen.md` festhalten statt sie nur im Chat zu stellen.
 
