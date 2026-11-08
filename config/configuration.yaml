@@ -9,4 +9,4 @@ homeassistant:
 logger:
   default: info
   logs:
-    custom_components.easy_pv: debug
+    custom_components.easy_pv_ew: debug

@@ -1,7 +1,10 @@
 {
-  "name": "Easy PV dev",
-  "image": "mcr.microsoft.com/devcontainers/python:3.13",
-  "postCreateCommand": "scripts/setup",
+  "name": "Easy PV (EW) dev",
+  "image": "mcr.microsoft.com/devcontainers/python:3.14",
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude && scripts/setup",
+  "mounts": [
+    "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume"
+  ],
   "forwardPorts": [
     8123
   ],
@@ -14,6 +17,7 @@
   "customizations": {
     "vscode": {
       "extensions": [
+        "anthropic.claude-code",
         "charliermarsh.ruff",
         "github.vscode-pull-request-github",
         "ms-python.python",

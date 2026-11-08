@@ -1,0 +1,46 @@
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "total": 1,
+    "rows": [
+      {
+        "id": "1001",
+        "userId": "3001",
+        "name": "Teststation",
+        "cover": "",
+        "address": "Musterstraße 1, 12345 Musterstadt",
+        "powerTotals": 421.92,
+        "todayPowerTotals": 0.34,
+        "genPower": 169.6999969482422,
+        "timeZone": "+0",
+        "isAdmin": true,
+        "status": "1",
+        "userName": "",
+        "longitude": "8.0",
+        "latitude": "50.0",
+        "plantLocation": "Musterstadt",
+        "cityCode": "",
+        "list": [
+          {
+            "fxTime": "2026-11-05T12:00+00:00",
+            "timestamp": 1793880000000,
+            "temp": "9",
+            "icon": "101",
+            "text": "Bewölkt",
+            "wind360": "",
+            "windDir": "",
+            "windScale": "",
+            "windSpeed": "",
+            "humidity": "81",
+            "precip": "",
+            "pressure": "1016",
+            "cloud": "",
+            "dew": ""
+          }
+        ],
+        "isBindMicrostorage": false
+      }
+    ]
+  }
+}

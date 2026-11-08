@@ -1,0 +1,111 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Easy-PV-Konto verbinden",
+                "description": "Mit dem Konto der Easy-PV-App anmelden. Gespeichert wird nur ein Anmelde-Token, nicht das Passwort.",
+                "data": {
+                    "username": "Benutzername",
+                    "password": "Passwort"
+                },
+                "data_description": {
+                    "username": "Telefonnummer oder E-Mail-Adresse, mit der du dich in der Easy-PV-App anmeldest.",
+                    "password": "Passwort der Easy-PV-App."
+                }
+            },
+            "reauth_confirm": {
+                "title": "Integration erneut authentifizieren",
+                "description": "Die Anmeldung bei Easy PV für {account} ist abgelaufen. Bitte die Zugangsdaten der Easy-PV-App erneut eingeben.",
+                "data": {
+                    "username": "Benutzername",
+                    "password": "Passwort"
+                },
+                "data_description": {
+                    "username": "Telefonnummer oder E-Mail-Adresse, mit der du dich in der Easy-PV-App anmeldest.",
+                    "password": "Passwort der Easy-PV-App."
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "Verbindung zur Easy-PV-Cloud fehlgeschlagen",
+            "invalid_auth": "Benutzername oder Passwort ungültig",
+            "unknown": "Unerwarteter Fehler"
+        },
+        "abort": {
+            "already_configured": "Dieses Konto ist bereits verbunden",
+            "reauth_successful": "Erneute Authentifizierung erfolgreich",
+            "wrong_account": "Die Zugangsdaten gehören zu einem anderen Easy-PV-Konto als {account}."
+        }
+    },
+    "device": {
+        "panel": {
+            "name": "{connected_inverter} PV-Eingang {panel_number}"
+        }
+    },
+    "entity": {
+        "binary_sensor": {
+            "online": {
+                "name": "Online"
+            },
+            "fault": {
+                "name": "Störung"
+            }
+        },
+        "sensor": {
+            "power": {
+                "name": "Leistung"
+            },
+            "voltage": {
+                "name": "Spannung"
+            },
+            "current": {
+                "name": "Strom"
+            },
+            "energy_today": {
+                "name": "Ertrag heute"
+            },
+            "energy_month": {
+                "name": "Ertrag Monat"
+            },
+            "energy_total": {
+                "name": "Gesamtertrag"
+            },
+            "grid_voltage": {
+                "name": "Netzspannung"
+            },
+            "firmware_app": {
+                "name": "Firmware (App)"
+            },
+            "firmware_net": {
+                "name": "Firmware (Netzwerk)"
+            }
+        },
+        "device_tracker": {
+            "location": {
+                "name": "Standort"
+            }
+        }
+    },
+    "exceptions": {
+        "cannot_connect": {
+            "message": "Easy-PV-Cloud nicht erreichbar: {error}"
+        },
+        "auth_failed": {
+            "message": "Die Anmeldung bei Easy PV ist abgelaufen, bitte erneut authentifizieren."
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Optionen",
+                "description": "Einstellungen der Integration Easy PV (EW).",
+                "data": {
+                    "scan_interval": "Abrufintervall (Sekunden)"
+                },
+                "data_description": {
+                    "scan_interval": "Wie oft die Easy-PV-Cloud abgefragt wird. 60 bis 240 Sekunden, Standard 60."
+                }
+            }
+        }
+    }
+}

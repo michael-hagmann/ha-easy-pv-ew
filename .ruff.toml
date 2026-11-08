@@ -1,6 +1,6 @@
 # The contents of this file is based on https://github.com/home-assistant/core/blob/dev/pyproject.toml
 
-target-version = "py313"
+target-version = "py314"
 
 [lint]
 select = [
@@ -16,6 +16,13 @@ ignore = [
     "TRY003",
     "EM101",
     "EM102",
+    "CPY001", # no per-file copyright headers; LICENSE applies
+    "PLR0913", # too many arguments; keyword-only options are fine (also ignored by HA core)
+    "PLR0917", # too many positional arguments (also ignored by HA core)
+    "TC001", # type-checking import blocks (also ignored by HA core)
+    "TC002",
+    "TC003",
+    "EXE002", # Windows-Dateisysteme (drvfs) melden alle Dateien als ausführbar; Git speichert 100644
 ]
 
 [lint.flake8-pytest-style]
@@ -26,3 +33,12 @@ keep-runtime-typing = true
 
 [lint.mccabe]
 max-complexity = 25
+
+[lint.per-file-ignores]
+"tests/**" = [
+    "S101", # assert is the normal way to check results in pytest
+    "PLR2004", # magic values are fine in test expectations
+    "ARG001", # fixtures are often requested only by parameter name
+    "S105", # dummy tokens and passwords in test data are not secrets
+    "S106",
+]

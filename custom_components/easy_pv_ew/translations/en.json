@@ -1,0 +1,111 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Connect Easy PV account",
+                "description": "Log in with the account of the Easy PV app. Only a login token is stored, not the password.",
+                "data": {
+                    "username": "Username",
+                    "password": "Password"
+                },
+                "data_description": {
+                    "username": "Phone number or email address used in the Easy PV app.",
+                    "password": "Password of the Easy PV app."
+                }
+            },
+            "reauth_confirm": {
+                "title": "Reauthenticate integration",
+                "description": "The Easy PV login for {account} has expired. Please enter the credentials of the Easy PV app again.",
+                "data": {
+                    "username": "Username",
+                    "password": "Password"
+                },
+                "data_description": {
+                    "username": "Phone number or email address used in the Easy PV app.",
+                    "password": "Password of the Easy PV app."
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "Failed to connect to the Easy PV cloud",
+            "invalid_auth": "Invalid username or password",
+            "unknown": "Unexpected error"
+        },
+        "abort": {
+            "already_configured": "This account is already connected",
+            "reauth_successful": "Re-authentication was successful",
+            "wrong_account": "The credentials belong to a different Easy PV account than {account}."
+        }
+    },
+    "device": {
+        "panel": {
+            "name": "{connected_inverter} PV input {panel_number}"
+        }
+    },
+    "entity": {
+        "binary_sensor": {
+            "online": {
+                "name": "Online"
+            },
+            "fault": {
+                "name": "Fault"
+            }
+        },
+        "sensor": {
+            "power": {
+                "name": "Power"
+            },
+            "voltage": {
+                "name": "Voltage"
+            },
+            "current": {
+                "name": "Current"
+            },
+            "energy_today": {
+                "name": "Energy today"
+            },
+            "energy_month": {
+                "name": "Energy this month"
+            },
+            "energy_total": {
+                "name": "Total energy"
+            },
+            "grid_voltage": {
+                "name": "Grid voltage"
+            },
+            "firmware_app": {
+                "name": "Firmware (app)"
+            },
+            "firmware_net": {
+                "name": "Firmware (network)"
+            }
+        },
+        "device_tracker": {
+            "location": {
+                "name": "Location"
+            }
+        }
+    },
+    "exceptions": {
+        "cannot_connect": {
+            "message": "Easy PV cloud not reachable: {error}"
+        },
+        "auth_failed": {
+            "message": "The Easy PV login has expired, please reauthenticate."
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "title": "Options",
+                "description": "Settings of the Easy PV (EW) integration.",
+                "data": {
+                    "scan_interval": "Polling interval (seconds)"
+                },
+                "data_description": {
+                    "scan_interval": "How often the Easy PV cloud is queried. 60 to 240 seconds, default 60."
+                }
+            }
+        }
+    }
+}

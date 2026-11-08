@@ -4,5 +4,6 @@ set -e
 
 cd "$(dirname "$0")/.."
 
-ruff format .
-ruff check . --fix
+# scripts/check_api has no .py suffix and is not found by ruff on its own.
+ruff format . scripts/check_api
+ruff check . scripts/check_api --fix

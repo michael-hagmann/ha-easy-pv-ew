@@ -1,0 +1,251 @@
+# Schnittstellenvertrag der Integration Easy PV (EW) mit der Easy-PV-Cloud.
+#
+# Eigene Beschreibung dessen, was die Integration tatsächlich nutzt: je
+# Endpunkt Methode, Pfad, Parameter und die Antwortfelder, die der Code liest,
+# mit Typ und erwarteter Einheit. Keine Kopie der Herstellerbeschreibung.
+# Grundlage: Auszug „Schnittstelle laut OpenAPI“ im Briefing des Projekts.
+#
+# Gepflegt zusammen mit dem Code (custom_components/easy_pv_ew/easy_pv/ und
+# coordinator.py). scripts/check_api vergleicht ihn mit der neuesten lokalen
+# Fassung der Herstellerbeschreibung; tests/test_api_contract.py prüft die
+# Fixtures dagegen.
+#
+# Feldpfade: Punkte trennen Objekte, "[]" steht für die Elemente einer Liste.
+# type:     JSON-Typ laut Beschreibung (string, integer, number, boolean,
+#           object, array). Der Code verträgt bei Zahlen auch Strings.
+# unit:     Einheit, in der der Code den Wert erwartet. Weicht die Einheit in
+#           der Beschreibung ab, meldet check_api das.
+# spec_unit: Einheit laut Beschreibung, wenn sie nachweislich nicht stimmt;
+#           check_api meldet dann nur eine Änderung der Beschreibung.
+# verified: false, solange der Wert nicht an echten Daten geprüft ist
+#           (Schritt 7 im Briefing).
+# optional: true, wenn der Code ohne das Feld auskommt.
+# range:    plausibler Bereich [min, max]; Werte außerhalb gelten zur Laufzeit
+#           als ungültig (Warnung, Entität unavailable). Großzügig gewählt,
+#           soll nur offensichtlich falsche Werte abfangen.
+#
+# Zur Laufzeit prüft custom_components/easy_pv_ew/easy_pv/validate.py die
+# Antworten; tests/test_validate.py hält es mit diesem Vertrag gleich.
+
+version: 1
+updated: 2026-11-06
+
+# OpenAPI-3-Beschreibung des Herstellers. Nur von Hand im Browser holen (der
+# Server verbietet automatische Abrufe per robots.txt) und als
+# local/openapi/easy-pv-JJJJ-MM-TT.json ablegen; nie ins Repository.
+openapi_url: https://inverter-en.easycharging-tech.com/prod-api/v3/api-docs
+
+envelope: &envelope
+  code:
+    type: integer
+    note: 200 = Erfolg, 401 = Token abgelehnt (dann LoginError)
+  msg:
+    type: string
+    optional: true
+
+endpoints:
+  login:
+    method: POST
+    path: /api/sys/v2/passLogin
+    auth: false
+    body:
+      num:
+        type: string
+        note: E-Mail oder Telefonnummer
+      password:
+        type: string
+    response:
+      <<: *envelope
+      data.token:
+        type: string
+        note: In der Beschreibung ist data ein freies Objekt; Feldname aus dem Original.
+
+  user_info:
+    method: GET
+    path: /api/user/v2/selectUserInfo
+    response:
+      <<: *envelope
+      data.userName:
+        type: string
+        optional: true
+        note: Titel des Config-Entrys
+      data.email:
+        type: string
+        optional: true
+        note: unique_id des Config-Entrys; fehlt bei Konten mit Telefonnummer
+
+  station_list:
+    method: GET
+    path: /api/powerStation/v3/getStationList
+    params:
+      pageNum:
+        type: integer
+      pageSize:
+        type: integer
+    response:
+      <<: *envelope
+      data.rows[].id:
+        type: string
+      data.rows[].name:
+        type: string
+        optional: true
+      data.rows[].address:
+        type: string
+        optional: true
+      data.rows[].plantLocation:
+        type: string
+        optional: true
+      data.rows[].latitude:
+        type: string
+        optional: true
+      data.rows[].longitude:
+        type: string
+        optional: true
+      data.rows[].genPower:
+        type: number
+        range: [0, 100000]
+        unit: W
+        optional: true
+        verified: true
+      data.rows[].todayPowerTotals:
+        type: number
+        range: [0, 10000]
+        unit: kWh
+        optional: true
+        verified: true
+        note: Einheit in der Beschreibung nicht angegeben; kWh, geprüft 05.11.2026 gegen die App.
+      data.rows[].powerTotals:
+        type: number
+        range: [0, 10000000]
+        unit: kWh
+        optional: true
+        verified: true
+        note: >-
+          Gesamtertrag der Station seit ihrer Anlage; läuft bei einer neuen
+          Registrierung des Geräts weiter. Einheit in der Beschreibung nicht
+          angegeben; kWh, geprüft 05.11.2026 gegen die App.
+      data.rows[].status:
+        type: string
+        optional: true
+        note: 1 online, 2 offline, 3 im Anschluss
+      data.rows[].timeZone:
+        type: string
+        optional: true
+        verified: true
+        note: >-
+          Zeitzone der Station als Abstand zu UTC in Stunden ("+0"). Die Cloud
+          setzt Tages- und Monatsertrag um Mitternacht dieser Zeitzone zurück
+          (beobachtet 06.11.2026: 00:00 UTC bei "+0").
+
+  device_list:
+    method: GET
+    path: /api/powerStation/v2/getPowerList
+    params:
+      powerId:
+        type: string
+        note: ID der Station
+    response:
+      <<: *envelope
+      data[].id:
+        type: string
+
+  device_data:
+    method: GET
+    path: /api/powerStation/v3/getDeviceDataInfo
+    params:
+      deviceId:
+        type: string
+      stationId:
+        type: string
+      date:
+        type: string
+        note: JJJJ-MM
+    response:
+      <<: *envelope
+      data.productCode:
+        type: string
+        optional: true
+        note: Modell mit gerätebezogenem Zusatz (VN2T08EU-<code>), nie loggen
+      data.deviceNum:
+        type: string
+        optional: true
+        note: Seriennummer, nie loggen
+      data.status:
+        type: string
+        optional: true
+        note: 1 online, 2 offline, 3 Störung
+      data.genPower:
+        type: number
+        range: [0, 5000]
+        unit: W
+        optional: true
+      data.genPowerTotal:
+        type: number
+        range: [0, 1000000]
+        unit: kWh
+        spec_unit: Wh
+        optional: true
+        verified: true
+        note: >-
+          Gesamtzähler des Geräts seit der letzten Registrierung in der App
+          (nicht seit Inbetriebnahme). Laut OpenAPI Wh, tatsächlich kWh
+          (geprüft 05.11.2026 gegen App und Station).
+      data.genpowerTodayTotals:
+        type: number
+        range: [0, 100]
+        unit: kWh
+        spec_unit: Wh
+        optional: true
+        verified: true
+        note: Laut OpenAPI Wh, tatsächlich kWh (geprüft 05.11.2026).
+      data.genpowerMonthTotals:
+        type: number
+        range: [0, 3000]
+        unit: kWh
+        spec_unit: Wh
+        optional: true
+        verified: true
+        note: Laut OpenAPI Wh, tatsächlich kWh (geprüft 05.11.2026).
+      data.gridVoltage:
+        type: number
+        range: [0, 300]
+        unit: V
+        optional: true
+      data.appFirmVer:
+        type: string
+        optional: true
+      data.netFirmVer:
+        type: string
+        optional: true
+      data.devicePhotovoltaicPanel:
+        type: array
+        optional: true
+        note: Kann nachts leer oder null sein.
+      data.devicePhotovoltaicPanel[].sort:
+        type: string
+        note: Nummer des Eingangs, ab 1
+      data.devicePhotovoltaicPanel[].genPower:
+        type: number
+        range: [0, 2000]
+        unit: W
+        optional: true
+      data.devicePhotovoltaicPanel[].current:
+        type: number
+        range: [0, 30]
+        unit: A
+        optional: true
+      data.devicePhotovoltaicPanel[].voltage:
+        type: number
+        range: [0, 100]
+        unit: V
+        optional: true
+      data.devicePhotovoltaicPanel[].freq:
+        type: number
+        range: [0, 70]
+        unit: Hz
+        optional: true
+      data.devicePhotovoltaicPanel[].temp:
+        type: number
+        range: [-40, 120]
+        unit: °C
+        optional: true

@@ -1,0 +1,22 @@
+{
+  "code": 200,
+  "msg": "success",
+  "data": {
+    "total": 1,
+    "rows": [
+      {
+        "id": "1001",
+        "name": "Teststation",
+        "address": "Musterstraße 1, 12345 Musterstadt",
+        "plantLocation": "Musterstadt",
+        "latitude": "50.0",
+        "longitude": "8.0",
+        "genPower": 512.0,
+        "todayPowerTotals": 1.25,
+        "powerTotals": 123.45,
+        "status": "1",
+        "timeZone": "+0"
+      }
+    ]
+  }
+}
