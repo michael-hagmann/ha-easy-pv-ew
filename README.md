@@ -2,6 +2,8 @@
 
 > Fork of [BigBoot/ha-easy-pv](https://github.com/BigBoot/ha-easy-pv), focused on the EW VN2T08EU.
 > Uses the domain `easy_pv_ew`, so it can be installed alongside the original.
+>
+> This is a community project, not affiliated with Electronic Way or the makers of the Easy PV app.
 
 [![GitHub Release][releases-shield]][releases]
 [![License][license-shield]](LICENSE)
@@ -17,7 +19,7 @@ Supported devices:
 - EW - Electronic Way VN2T08EU ✅ (tested with this fork)
 - EW - Electronic Way VN2T10EU / VN2T06EU (listed as supported by the original integration, untested with this fork)
 - Hatch Solar HSEU-600D/800D/1000D/HSEU-300S/400S/500S ⚠️ (Untested)
-- Probably more if your app looks like this chances are it will work: ![app][app]
+- Probably more devices that are set up with the Easy PV app (untested)
 
 
 ## Installation
@@ -130,8 +132,7 @@ Code template was mainly taken from [@Ludeeus](https://github.com/ludeeus)'s [in
 [integration_blueprint]: https://github.com/custom-components/integration_blueprint
 [hacs]: https://hacs.xyz
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
-[logo]: logo.svg
-[app]: app.png
+[logo]: custom_components/easy_pv_ew/brand/icon.png
 [license-shield]: https://img.shields.io/github/license/michael-hagmann/ha-easy-pv-ew.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/badge/maintainer-%40michael--hagmann-blue.svg?style=for-the-badge
 [releases-shield]: https://img.shields.io/github/release/michael-hagmann/ha-easy-pv-ew.svg?style=for-the-badge

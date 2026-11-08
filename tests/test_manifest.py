@@ -1,6 +1,7 @@
 """Smoke test: the integration can be found and its manifest is valid."""
 
 import json
+import struct
 from pathlib import Path
 
 from homeassistant.core import HomeAssistant
@@ -50,3 +51,13 @@ def test_manifest_keys_sorted() -> None:
 
     assert keys[:2] == ["domain", "name"]
     assert keys[2:] == sorted(keys[2:])
+
+
+def test_brand_icons() -> None:
+    """HA 2026.x serves brand images of custom integrations from brand/."""
+    brand = Path(__file__).parent.parent / "custom_components/easy_pv_ew/brand"
+    for name, size in (("icon.png", 256), ("icon@2x.png", 512)):
+        data = (brand / name).read_bytes()
+        assert data[:8] == b"\x89PNG\r\n\x1a\n"
+        width, height = struct.unpack(">II", data[16:24])
+        assert (width, height) == (size, size), name
